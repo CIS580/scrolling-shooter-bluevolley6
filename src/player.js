@@ -2,7 +2,7 @@
 
 /* Classes and Libraries */
 const Vector = require('./vector');
-const Missile = require('./missile');
+//const Missile = require('./missile');
 
 /* Constants */
 const PLAYER_SPEED = 5;

@@ -6,7 +6,11 @@ const Vector = require('./vector');
 const Camera = require('./camera');
 const Player = require('./player');
 const BulletPool = require('./bullet_pool');
+const Tilemap = require('./tilemap');
 
+var level1Back = require('../assets/level1/background.json');
+var level1Mid = require('../assets/level1/midground.json');
+var level1Fore = require('../assets/level1/foreground.json');
 
 /* Global variables */
 var canvas = document.getElementById('screen');
@@ -21,6 +25,32 @@ var camera = new Camera(canvas);
 var bullets = new BulletPool(10);
 var missiles = [];
 var player = new Player(bullets, missiles);
+
+var tilemaps1 = [];
+
+tilemaps1.push(new Tilemap(level1Back, {
+  onload: function() {
+    checkMapsLoaded();
+  }
+}));
+tilemaps1.push(new Tilemap(level1Mid, {
+  onload: function() {
+    checkMapsLoaded();
+  }
+}));
+tilemaps1.push(new Tilemap(level1Fore, {
+  onload: function() {
+    checkMapsLoaded();
+  }
+}));
+
+var mapCount = 3;
+function checkMapsLoaded(){
+  mapCount--;
+  if(mapCount == 0){
+    masterLoop(performance.now());
+  }
+}
 
 /**
  * @function onkeydown
@@ -138,6 +168,9 @@ function render(elapsedTime, ctx) {
   ctx.fillRect(0, 0, 1024, 786);
 
   // TODO: Render background
+  tilemaps1.forEach(function(map){
+    map.render(ctx);
+  });
 
   // Transform the coordinate system using
   // the camera position BEFORE rendering
