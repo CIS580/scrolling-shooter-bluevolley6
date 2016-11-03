@@ -168,9 +168,20 @@ function render(elapsedTime, ctx) {
   ctx.fillRect(0, 0, 1024, 786);
 
   // TODO: Render background
-  tilemaps1.forEach(function(map){
-    map.render(ctx);
-  });
+  ctx.save();
+  ctx.translate(0, -camera.y);
+  tilemaps1[0].render(ctx);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(0, -camera.y*.6);
+  tilemaps1[1].render(ctx);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(0, -camera.y*.2);
+  tilemaps1[2].render(ctx);
+  ctx.restore();
 
   // Transform the coordinate system using
   // the camera position BEFORE rendering

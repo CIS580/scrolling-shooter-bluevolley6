@@ -385,9 +385,20 @@ function render(elapsedTime, ctx) {
   ctx.fillRect(0, 0, 1024, 786);
 
   // TODO: Render background
-  tilemaps1.forEach(function(map){
-    map.render(ctx);
-  });
+  ctx.save();
+  ctx.translate(0, -camera.y);
+  tilemaps1[0].render(ctx);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(0, -camera.y*.6);
+  tilemaps1[1].render(ctx);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(0, -camera.y*.2);
+  tilemaps1[2].render(ctx);
+  ctx.restore();
 
   // Transform the coordinate system using
   // the camera position BEFORE rendering
@@ -564,6 +575,21 @@ function Camera(screen) {
  */
 Camera.prototype.update = function(target) {
   // TODO: Align camera with player
+  if(target.y - this.y > 600){
+    this.y = target.y - 600;
+  }
+
+  if(target.y - this.y < 610/2){
+    this.y = target.y - 610/2;
+  }
+
+  if(this.y < 0){
+    this.y = 0;
+  }
+
+  if(this.y > 2464 - this.height){
+    this.y = 2464 - this.height;
+  }
 }
 
 /**
@@ -686,7 +712,7 @@ function Player(bullets, missiles) {
   this.missileCount = 4;
   this.bullets = bullets;
   this.angle = 0;
-  this.position = {x: 200, y: 200};
+  this.position = {x: 200, y: 2450};
   this.velocity = {x: 0, y: 0};
   this.img = new Image()
   this.img.src = 'assets/tyrian.shp.007D3C.png';
@@ -720,8 +746,9 @@ Player.prototype.update = function(elapsedTime, input) {
 
   // don't let the player move off-screen
   if(this.position.x < 0) this.position.x = 0;
-  if(this.position.x > 1024) this.position.x = 1024;
-  if(this.position.y > 786) this.position.y = 786;
+  if(this.position.x > 960) this.position.x = 960;
+  if(this.position.y > 2450) this.position.y = 2450;
+  if(this.position.y < 616/2) this.position.y = 616/2;
 }
 
 /**
@@ -851,7 +878,7 @@ Tilemap.prototype.render = function(screenCtx) {
     // Only draw layers that are currently visible
     if(layer.visible) {
       for(var y = 0; y < layer.height; y++) {
-          for(var x = 0; x < layer.width; x++) {
+        for(var x = 0; x < layer.width; x++) {
           var tileId = layer.data[x + layer.width * y];
 
           // tiles with an id of 0 don't exist

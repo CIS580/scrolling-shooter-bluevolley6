@@ -85,7 +85,7 @@ Tilemap.prototype.render = function(screenCtx) {
     // Only draw layers that are currently visible
     if(layer.visible) {
       for(var y = 0; y < layer.height; y++) {
-          for(var x = 0; x < layer.width; x++) {
+        for(var x = 0; x < layer.width; x++) {
           var tileId = layer.data[x + layer.width * y];
 
           // tiles with an id of 0 don't exist
