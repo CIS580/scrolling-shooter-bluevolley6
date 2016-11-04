@@ -2,6 +2,7 @@
 
 /* Classes and Libraries */
 const Vector = require('./vector');
+const Bullet = require('./bullet');
 //const Missile = require('./missile');
 
 /* Constants */
@@ -17,12 +18,11 @@ module.exports = exports = Player;
 /**
  * @constructor Player
  * Creates a player
- * @param {BulletPool} bullets the bullet pool
  */
 function Player(bullets, missiles) {
+  this.bullets = bullets;
   this.missiles = missiles;
   this.missileCount = 4;
-  this.bullets = bullets;
   this.angle = 0;
   this.position = {x: 200, y: 2450};
   this.velocity = {x: 0, y: 0};
@@ -69,7 +69,7 @@ Player.prototype.update = function(elapsedTime, input) {
  * @param {DOMHighResTimeStamp} elapsedTime
  * @param {CanvasRenderingContext2D} ctx
  */
-Player.prototype.render = function(elapasedTime, ctx) {
+Player.prototype.render = function(elapsedTime, ctx) {
   var offset = this.angle * 23;
   ctx.save();
   ctx.translate(this.position.x, this.position.y);
@@ -77,15 +77,14 @@ Player.prototype.render = function(elapasedTime, ctx) {
   ctx.restore();
 }
 
-/**
- * @function fireBullet
- * Fires a bullet
- * @param {Vector} direction
- */
-Player.prototype.fireBullet = function(direction) {
-  var position = Vector.add(this.position, {x:30, y:30});
-  var velocity = Vector.scale(Vector.normalize(direction), BULLET_SPEED);
-  this.bullets.add(position, velocity);
+Player.prototype.fireBullet = function(canvas) {
+  this.bullets.push(new Bullet({
+    x:this.position.x,
+    y:this.position.y,
+    angle: Math.PI/2},
+    canvas,
+    BULLET_SPEED
+  ));
 }
 
 /**

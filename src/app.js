@@ -5,8 +5,9 @@ const Game = require('./game');
 const Vector = require('./vector');
 const Camera = require('./camera');
 const Player = require('./player');
-const BulletPool = require('./bullet_pool');
 const Tilemap = require('./tilemap');
+const Bullet = require('./bullet');
+const Enemy = require('./enemy');
 
 var level1Back = require('../assets/level1/background.json');
 var level1Mid = require('../assets/level1/midground.json');
@@ -22,9 +23,9 @@ var input = {
   right: false
 }
 var camera = new Camera(canvas);
-var bullets = new BulletPool(10);
 var missiles = [];
-var player = new Player(bullets, missiles);
+var player = new Player([], missiles);
+var enemy = new Enemy(canvas);
 
 var tilemaps1 = [];
 
@@ -52,6 +53,8 @@ function checkMapsLoaded(){
   }
 }
 
+var direction = {x: 0, y: -1};
+
 /**
  * @function onkeydown
  * Handles keydown events
@@ -76,6 +79,10 @@ window.onkeydown = function(event) {
     case "ArrowRight":
     case "d":
       input.right = true;
+      event.preventDefault();
+      break;
+    case " ":
+      player.fireBullet(canvas);
       event.preventDefault();
       break;
   }
@@ -130,18 +137,22 @@ masterLoop(performance.now());
  * the number of milliseconds passed since the last frame.
  */
 function update(elapsedTime) {
-
   // update the player
   player.update(elapsedTime, input);
+
+  // update enemies
+  enemy.update(camera);
 
   // update the camera
   camera.update(player.position);
 
   // Update bullets
-  bullets.update(elapsedTime, function(bullet){
-    if(!camera.onScreen(bullet)) return true;
-    return false;
-  });
+  for(var i = 0; i < player.bullets.length; i++) {
+    player.bullets[i].update(camera);
+    if(!player.bullets[i].alive) {
+      player.bullets.splice(i, 1);
+    }
+  }
 
   // Update missiles
   var markedForRemoval = [];
@@ -207,7 +218,7 @@ function render(elapsedTime, ctx) {
   */
 function renderWorld(elapsedTime, ctx) {
     // Render the bullets
-    bullets.render(elapsedTime, ctx);
+    player.bullets.forEach(function(bullet){bullet.render(elapsedTime, ctx);});
 
     // Render the missiles
     missiles.forEach(function(missile) {
@@ -216,6 +227,9 @@ function renderWorld(elapsedTime, ctx) {
 
     // Render the player
     player.render(elapsedTime, ctx);
+
+    // Render the enemies
+    enemy.render(elapsedTime, ctx);
 }
 
 /**

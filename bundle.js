@@ -222,8 +222,9 @@ const Game = require('./game');
 const Vector = require('./vector');
 const Camera = require('./camera');
 const Player = require('./player');
-const BulletPool = require('./bullet_pool');
 const Tilemap = require('./tilemap');
+const Bullet = require('./bullet');
+const Enemy = require('./enemy');
 
 var level1Back = require('../assets/level1/background.json');
 var level1Mid = require('../assets/level1/midground.json');
@@ -239,9 +240,9 @@ var input = {
   right: false
 }
 var camera = new Camera(canvas);
-var bullets = new BulletPool(10);
 var missiles = [];
-var player = new Player(bullets, missiles);
+var player = new Player([], missiles);
+var enemy = new Enemy(canvas);
 
 var tilemaps1 = [];
 
@@ -269,6 +270,8 @@ function checkMapsLoaded(){
   }
 }
 
+var direction = {x: 0, y: -1};
+
 /**
  * @function onkeydown
  * Handles keydown events
@@ -293,6 +296,10 @@ window.onkeydown = function(event) {
     case "ArrowRight":
     case "d":
       input.right = true;
+      event.preventDefault();
+      break;
+    case " ":
+      player.fireBullet(canvas);
       event.preventDefault();
       break;
   }
@@ -347,18 +354,22 @@ masterLoop(performance.now());
  * the number of milliseconds passed since the last frame.
  */
 function update(elapsedTime) {
-
   // update the player
   player.update(elapsedTime, input);
+
+  // update enemies
+  enemy.update(camera);
 
   // update the camera
   camera.update(player.position);
 
   // Update bullets
-  bullets.update(elapsedTime, function(bullet){
-    if(!camera.onScreen(bullet)) return true;
-    return false;
-  });
+  for(var i = 0; i < player.bullets.length; i++) {
+    player.bullets[i].update(camera);
+    if(!player.bullets[i].alive) {
+      player.bullets.splice(i, 1);
+    }
+  }
 
   // Update missiles
   var markedForRemoval = [];
@@ -424,7 +435,7 @@ function render(elapsedTime, ctx) {
   */
 function renderWorld(elapsedTime, ctx) {
     // Render the bullets
-    bullets.render(elapsedTime, ctx);
+    player.bullets.forEach(function(bullet){bullet.render(elapsedTime, ctx);});
 
     // Render the missiles
     missiles.forEach(function(missile) {
@@ -433,6 +444,9 @@ function renderWorld(elapsedTime, ctx) {
 
     // Render the player
     player.render(elapsedTime, ctx);
+
+    // Render the enemies
+    enemy.render(elapsedTime, ctx);
 }
 
 /**
@@ -445,102 +459,64 @@ function renderGUI(elapsedTime, ctx) {
   // TODO: Render the GUI
 }
 
-},{"../assets/level1/background.json":1,"../assets/level1/foreground.json":2,"../assets/level1/midground.json":3,"./bullet_pool":5,"./camera":6,"./game":7,"./player":8,"./tilemap":9,"./vector":10}],5:[function(require,module,exports){
+},{"../assets/level1/background.json":1,"../assets/level1/foreground.json":2,"../assets/level1/midground.json":3,"./bullet":5,"./camera":6,"./enemy":7,"./game":8,"./player":9,"./tilemap":10,"./vector":11}],5:[function(require,module,exports){
 "use strict";
 
-/**
- * @module BulletPool
- * A class for managing bullets in-game
- * We use a Float32Array to hold our bullet info,
- * as this creates a single memory buffer we can
- * iterate over, minimizing cache misses.
- * Values stored are: positionX, positionY, velocityX,
- * velocityY in that order.
- */
-module.exports = exports = BulletPool;
+const MS_PER_FRAME = 1000/8;
 
 /**
- * @constructor BulletPool
- * Creates a BulletPool of the specified size
- * @param {uint} size the maximum number of bullets to exits concurrently
+ * @module exports the Player class
  */
-function BulletPool(maxSize) {
-  this.pool = new Float32Array(4 * maxSize);
-  this.end = 0;
-  this.max = maxSize;
+module.exports = exports = Bullet;
+
+/**
+ * @constructor Bullet
+ * Creates a new bullet object
+ * @param {Postition} position object specifying an x and y
+ */
+function Bullet(position, canvas, speed) {
+  this.worldWidth = canvas.width;
+  this.worldHeight = canvas.height;
+  this.position = {
+    x: position.x,
+    y: position.y
+  };
+  this.angle = position.angle;
+  this.velocity = {
+    x: Math.cos(this.angle),
+    y: Math.sin(this.angle)
+  }
+  this.color = 'red';
+  this.alive = true;
+  this.speed = speed
 }
 
 /**
- * @function add
- * Adds a new bullet to the end of the BulletPool.
- * If there is no room left, no bullet is created.
- * @param {Vector} position where the bullet begins
- * @param {Vector} velocity the bullet's velocity
-*/
-BulletPool.prototype.add = function(position, velocity) {
-  if(this.end < this.max) {
-    this.pool[4*this.end] = position.x;
-    this.pool[4*this.end+1] = position.y;
-    this.pool[4*this.end+2] = velocity.x;
-    this.pool[4*this.end+3] = velocity.y;
-    this.end++;
+ * @function updates the bullet object
+ */
+Bullet.prototype.update = function(camera) {
+  // Apply velocity
+  this.position.x += this.velocity.x * this.speed;
+  this.position.y -= this.velocity.y * this.speed;
+
+  if(this.position.y < camera.y) {
+    this.alive = false;
   }
 }
 
 /**
- * @function update
- * Updates the bullet using its stored velocity, and
- * calls the callback function passing the transformed
- * bullet.  If the callback returns true, the bullet is
- * removed from the pool.
- * Removed bullets are replaced with the last bullet's values
- * and the size of the bullet array is reduced, keeping
- * all live bullets at the front of the array.
- * @param {DOMHighResTimeStamp} elapsedTime
- * @param {function} callback called with the bullet's position,
- * if the return value is true, the bullet is removed from the pool
+ * @function renders the bullet into the provided context
+ * {DOMHighResTimeStamp} time the elapsed time since the last frame
+ * {CanvasRenderingContext2D} ctx the context to render into
  */
-BulletPool.prototype.update = function(elapsedTime, callback) {
-  for(var i = 0; i < this.end; i++){
-    // Move the bullet
-    this.pool[4*i] += this.pool[4*i+2];
-    this.pool[4*i+1] += this.pool[4*i+3];
-    // If a callback was supplied, call it
-    if(callback && callback({
-      x: this.pool[4*i],
-      y: this.pool[4*i+1]
-    })) {
-      // Swap the current and last bullet if we
-      // need to remove the current bullet
-      this.pool[4*i] = this.pool[4*(this.end-1)];
-      this.pool[4*i+1] = this.pool[4*(this.end-1)+1];
-      this.pool[4*i+2] = this.pool[4*(this.end-1)+2];
-      this.pool[4*i+3] = this.pool[4*(this.end-1)+3];
-      // Reduce the total number of bullets by 1
-      this.end--;
-      // Reduce our iterator by 1 so that we update the
-      // freshly swapped bullet.
-      i--;
-    }
-  }
-}
-
-/**
- * @function render
- * Renders all bullets in our array.
- * @param {DOMHighResTimeStamp} elapsedTime
- * @param {CanvasRenderingContext2D} ctx
- */
-BulletPool.prototype.render = function(elapsedTime, ctx) {
-  // Render the bullets as a single path
+Bullet.prototype.render = function(time, ctx) {
   ctx.save();
+  ctx.strokeStyle = this.color;
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.fillStyle = "black";
-  for(var i = 0; i < this.end; i++) {
-    ctx.moveTo(this.pool[4*i], this.pool[4*i+1]);
-    ctx.arc(this.pool[4*i], this.pool[4*i+1], 2, 0, 2*Math.PI);
-  }
-  ctx.fill();
+  ctx.moveTo(this.position.x, this.position.y);
+  ctx.lineTo(this.position.x + this.speed*this.velocity.x, this.position.y - this.speed*this.velocity.y);
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -627,7 +603,97 @@ Camera.prototype.toWorldCoordinates = function(screenCoordinates) {
   return Vector.add(screenCoordinates, this);
 }
 
-},{"./vector":10}],7:[function(require,module,exports){
+},{"./vector":11}],7:[function(require,module,exports){
+"use strict";
+
+/* Classes and Libraries */
+const Vector = require('./vector');
+const Bullet = require('./bullet');
+//const Missile = require('./missile');
+
+/* Constants */
+const ENEMY_SPEED = .001;
+const BULLET_SPEED = -10;
+
+var timePassed = 0;
+
+/**
+ * @module Enemy
+ * A class representing a enemy's ship
+ */
+module.exports = exports = Enemy;
+
+/**
+ * @constructor Enemy
+ * Creates an enemy
+ */
+function Enemy(canvas) {
+  this.bullets = [];
+  this.angle = 0;
+  this.position = {x: 200, y: 200};
+  this.velocity = {x: 0, y: ENEMY_SPEED};
+  this.img = new Image()
+  this.img.src = 'assets/enemies.png';
+  this.canvas = canvas;
+}
+
+/**
+ * @function update
+ * Updates the enemy based on the supplied input
+ * @param {DOMHighResTimeStamp} elapedTime
+ * @param {Input} input object defining input, must have
+ * boolean properties: up, left, right, down
+ */
+Enemy.prototype.update = function(camera) {
+
+  this.velocity.y += ENEMY_SPEED;
+
+  // move the enemy
+  this.position.x += this.velocity.x;
+  this.position.y += this.velocity.y;
+
+  for(var i = 0; i < this.bullets.length; i++) {
+    this.bullets[i].update(camera);
+  }
+}
+
+/**
+ * @function render
+ * Renders the enemy ship in world coordinates
+ * @param {DOMHighResTimeStamp} elapsedTime
+ * @param {CanvasRenderingContext2D} ctx
+ */
+Enemy.prototype.render = function(elapsedTime, ctx) {
+  timePassed += elapsedTime;
+  if(timePassed > 3000) {
+    this.bullets.push(new Bullet({
+      x:this.position.x,
+      y:this.position.y,
+      angle: Math.PI/2},
+      this.canvas,
+      BULLET_SPEED
+    ));
+    timePassed = 0;
+  }
+
+  for(var i = 0; i < this.bullets.length; i++) {
+    this.bullets[i].render(elapsedTime, ctx);
+  }
+
+  ctx.save();
+  ctx.translate(this.position.x, this.position.y);
+  ctx.drawImage(
+        //image
+        this.img,
+        //source rectangle
+        47, 197, 24, 28,
+        //destination rectangle
+        this.position.x, this.position.y, 24, 28
+      );
+  ctx.restore();
+}
+
+},{"./bullet":5,"./vector":11}],8:[function(require,module,exports){
 "use strict";
 
 /**
@@ -685,11 +751,12 @@ Game.prototype.loop = function(newTime) {
   this.frontCtx.drawImage(this.backBuffer, 0, 0);
 }
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 "use strict";
 
 /* Classes and Libraries */
 const Vector = require('./vector');
+const Bullet = require('./bullet');
 //const Missile = require('./missile');
 
 /* Constants */
@@ -705,12 +772,11 @@ module.exports = exports = Player;
 /**
  * @constructor Player
  * Creates a player
- * @param {BulletPool} bullets the bullet pool
  */
 function Player(bullets, missiles) {
+  this.bullets = bullets;
   this.missiles = missiles;
   this.missileCount = 4;
-  this.bullets = bullets;
   this.angle = 0;
   this.position = {x: 200, y: 2450};
   this.velocity = {x: 0, y: 0};
@@ -757,7 +823,7 @@ Player.prototype.update = function(elapsedTime, input) {
  * @param {DOMHighResTimeStamp} elapsedTime
  * @param {CanvasRenderingContext2D} ctx
  */
-Player.prototype.render = function(elapasedTime, ctx) {
+Player.prototype.render = function(elapsedTime, ctx) {
   var offset = this.angle * 23;
   ctx.save();
   ctx.translate(this.position.x, this.position.y);
@@ -765,15 +831,14 @@ Player.prototype.render = function(elapasedTime, ctx) {
   ctx.restore();
 }
 
-/**
- * @function fireBullet
- * Fires a bullet
- * @param {Vector} direction
- */
-Player.prototype.fireBullet = function(direction) {
-  var position = Vector.add(this.position, {x:30, y:30});
-  var velocity = Vector.scale(Vector.normalize(direction), BULLET_SPEED);
-  this.bullets.add(position, velocity);
+Player.prototype.fireBullet = function(canvas) {
+  this.bullets.push(new Bullet({
+    x:this.position.x,
+    y:this.position.y,
+    angle: Math.PI/2},
+    canvas,
+    BULLET_SPEED
+  ));
 }
 
 /**
@@ -790,7 +855,7 @@ Player.prototype.fireMissile = function() {
   }
 }
 
-},{"./vector":10}],9:[function(require,module,exports){
+},{"./bullet":5,"./vector":11}],10:[function(require,module,exports){
 "use strict";
 
 // Tilemap engine defined using the Module pattern
@@ -905,7 +970,7 @@ Tilemap.prototype.tileAt = function(x, y, layer) {
   return this.tiles[this.layers[layer].data[x + y*this.mapWidth] - 1];
 }
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 
 /**
