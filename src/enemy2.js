@@ -2,12 +2,12 @@
 
 /* Classes and Libraries */
 const Vector = require('./vector');
-const Bullet = require('./bullet');
+const Shot = require('./shot');
 //const Missile = require('./missile');
 
 /* Constants */
 const ENEMY_SPEED = .001;
-const BULLET_SPEED = -10;
+const BULLET_SPEED = 15;
 
 var timePassed = 0;
 
@@ -15,13 +15,13 @@ var timePassed = 0;
  * @module Enemy
  * A class representing a enemy's ship
  */
-module.exports = exports = Enemy;
+module.exports = exports = Enemy2;
 
 /**
  * @constructor Enemy
  * Creates an enemy
  */
-function Enemy(position, canvas) {
+function Enemy2(position, canvas) {
   this.bullets = [];
   this.angle = 0;
   this.position = {x: position.x, y: position.y};
@@ -29,6 +29,7 @@ function Enemy(position, canvas) {
   this.img = new Image();
   this.img.src = 'assets/enemies.png';
   this.canvas = canvas;
+  this.state = 0;
 }
 
 /**
@@ -38,16 +39,21 @@ function Enemy(position, canvas) {
  * @param {Input} input object defining input, must have
  * boolean properties: up, left, right, down
  */
-Enemy.prototype.update = function(camera, player) {
+Enemy2.prototype.update = function(camera, player) {
 
   this.velocity.y += ENEMY_SPEED;
 
   // move the enemy
   this.position.y += this.velocity.y;
-
-  for(var i = 0; i < this.bullets.length; i++) {
-    this.bullets[i].update(camera);
+  if(player.position.x < this.position.x) {
+    this.position.x--;
+  } else if (player.position.x > this.position.x) {
+    this.position.x++;
   }
+
+  this.bullets.forEach(function(shot) {
+    shot.update();
+  })
 }
 
 /**
@@ -56,45 +62,46 @@ Enemy.prototype.update = function(camera, player) {
  * @param {DOMHighResTimeStamp} elapsedTime
  * @param {CanvasRenderingContext2D} ctx
  */
-Enemy.prototype.render = function(camera, elapsedTime, ctx) {
+Enemy2.prototype.render = function(camera, elapsedTime, ctx) {
   timePassed += elapsedTime;
-  if(timePassed > 2000 && this.position.y > camera.y) {
-    this.bullets.push(new Bullet({
-      x:this.position.x+1,
-      y:this.position.y+28,
-      angle: Math.PI/2},
+
+  ctx.save();
+  ctx.drawImage(
+    //image
+    this.img,
+    //source rectangle
+    47, 141, 24, 28,
+    //destination rectangle
+    this.position.x, this.position.y, 24, 28
+  );
+  ctx.restore();
+
+  if(timePassed > 2000 && this.position.y > camera.y && this.bullets.length == 0) {
+    var position = {
+      x: this.position.x+6,
+      y: this.position.y+15
+    };
+
+    var image = {
+      x: 0,
+      y: 56,
+      width: 12,
+      height: 14
+    };
+
+    this.bullets.push(new Shot(
+      position,
       this.canvas,
-      BULLET_SPEED
+      BULLET_SPEED,
+      'assets/bullets.png',
+      image
     ));
-    this.bullets.push(new Bullet({
-      x:this.position.x+12,
-      y:this.position.y+28,
-      angle: Math.PI/2},
-      this.canvas,
-      BULLET_SPEED
-    ));
-    this.bullets.push(new Bullet({
-      x:this.position.x+23,
-      y:this.position.y+28,
-      angle: Math.PI/2},
-      this.canvas,
-      BULLET_SPEED
-    ));
-    timePassed = 0;
   }
 
   for(var i = 0; i < this.bullets.length; i++) {
     this.bullets[i].render(elapsedTime, ctx);
+    if(this.bullets[i].state > 4) {
+      this.bullets.splice(i, 1);
+    }
   }
-
-  ctx.save();
-  ctx.drawImage(
-        //image
-        this.img,
-        //source rectangle
-        47, 197, 24, 28,
-        //destination rectangle
-        this.position.x, this.position.y, 24, 28
-      );
-  ctx.restore();
 }

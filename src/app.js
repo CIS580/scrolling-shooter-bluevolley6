@@ -8,6 +8,10 @@ const Player = require('./player');
 const Tilemap = require('./tilemap');
 const Bullet = require('./bullet');
 const Enemy = require('./enemy');
+const Enemy2 = require('./enemy2');
+const Enemy3 = require('./enemy3');
+const Enemy4 = require('./enemy4');
+const Enemy5 = require('./enemy5');
 
 var level1Back = require('../assets/level1/background.json');
 var level1Mid = require('../assets/level1/midground.json');
@@ -25,7 +29,51 @@ var input = {
 var camera = new Camera(canvas);
 var missiles = [];
 var player = new Player([], missiles);
-var enemy = new Enemy(canvas);
+
+var shooting = false;
+
+var enemies = [];
+for(var i = 0; i < 5; i++) {
+  enemies.push(new Enemy(
+    {
+      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+      y: Math.floor(Math.random() * 1000) + 10
+    },
+    canvas
+  ));
+
+  enemies.push(new Enemy2(
+    {
+      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+      y: Math.floor(Math.random() * 1000) + 10
+    },
+    canvas
+  ));
+
+  enemies.push(new Enemy3(
+    {
+      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+      y: Math.floor(Math.random() * 1000) + 10
+    },
+    canvas
+  ));
+
+  enemies.push(new Enemy4(
+    {
+      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+      y: Math.floor(Math.random() * 1000) + 10
+    },
+    canvas
+  ));
+
+  enemies.push(new Enemy5(
+    {
+      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+      y: Math.floor(Math.random() * 1000) + 10
+    },
+    canvas
+  ));
+}
 
 var tilemaps1 = [];
 
@@ -82,8 +130,11 @@ window.onkeydown = function(event) {
       event.preventDefault();
       break;
     case " ":
-      player.fireBullet(canvas);
-      event.preventDefault();
+      if(!shooting) {
+        player.fireBullet(canvas);
+        event.preventDefault();
+        shooting = true;
+      }
       break;
   }
 }
@@ -114,6 +165,9 @@ window.onkeyup = function(event) {
       input.right = false;
       event.preventDefault();
       break;
+    case " ":
+      shooting = false;
+      break;
   }
 }
 
@@ -141,7 +195,9 @@ function update(elapsedTime) {
   player.update(elapsedTime, input);
 
   // update enemies
-  enemy.update(camera);
+  enemies.forEach(function(enemy) {
+    enemy.update(camera, player);
+  });
 
   // update the camera
   camera.update(player.position);
@@ -229,7 +285,9 @@ function renderWorld(elapsedTime, ctx) {
     player.render(elapsedTime, ctx);
 
     // Render the enemies
-    enemy.render(camera, elapsedTime, ctx);
+    enemies.forEach(function(enemy) {
+      enemy.render(camera, elapsedTime, ctx);
+    });
 }
 
 /**

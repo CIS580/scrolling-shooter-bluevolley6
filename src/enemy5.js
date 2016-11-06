@@ -15,19 +15,19 @@ var timePassed = 0;
  * @module Enemy
  * A class representing a enemy's ship
  */
-module.exports = exports = Enemy;
+module.exports = exports = Enemy5;
 
 /**
  * @constructor Enemy
  * Creates an enemy
  */
-function Enemy(position, canvas) {
+function Enemy5(position, canvas) {
   this.bullets = [];
   this.angle = 0;
   this.position = {x: position.x, y: position.y};
   this.velocity = {x: 0, y: ENEMY_SPEED};
   this.img = new Image();
-  this.img.src = 'assets/enemies.png';
+  this.img.src = 'assets/enemies2.png';
   this.canvas = canvas;
 }
 
@@ -38,12 +38,22 @@ function Enemy(position, canvas) {
  * @param {Input} input object defining input, must have
  * boolean properties: up, left, right, down
  */
-Enemy.prototype.update = function(camera, player) {
+Enemy5.prototype.update = function(camera, player) {
 
   this.velocity.y += ENEMY_SPEED;
 
   // move the enemy
-  this.position.y += this.velocity.y;
+  if(player.position.y - 80 > this.position.y) {
+    this.position.y += this.velocity.y
+  } else {
+    this.position.y -= this.velocity.y
+  }
+
+  if(player.position.x - 13 < this.position.x) {
+    this.position.x--;
+  } else if (player.position.x > this.position.x) {
+    this.position.x++;
+  }
 
   for(var i = 0; i < this.bullets.length; i++) {
     this.bullets[i].update(camera);
@@ -56,26 +66,19 @@ Enemy.prototype.update = function(camera, player) {
  * @param {DOMHighResTimeStamp} elapsedTime
  * @param {CanvasRenderingContext2D} ctx
  */
-Enemy.prototype.render = function(camera, elapsedTime, ctx) {
+Enemy5.prototype.render = function(camera, elapsedTime, ctx) {
   timePassed += elapsedTime;
   if(timePassed > 2000 && this.position.y > camera.y) {
     this.bullets.push(new Bullet({
-      x:this.position.x+1,
-      y:this.position.y+28,
+      x:this.position.x+2,
+      y:this.position.y+14,
       angle: Math.PI/2},
       this.canvas,
       BULLET_SPEED
     ));
     this.bullets.push(new Bullet({
-      x:this.position.x+12,
-      y:this.position.y+28,
-      angle: Math.PI/2},
-      this.canvas,
-      BULLET_SPEED
-    ));
-    this.bullets.push(new Bullet({
-      x:this.position.x+23,
-      y:this.position.y+28,
+      x:this.position.x+22,
+      y:this.position.y+14,
       angle: Math.PI/2},
       this.canvas,
       BULLET_SPEED
@@ -92,7 +95,7 @@ Enemy.prototype.render = function(camera, elapsedTime, ctx) {
         //image
         this.img,
         //source rectangle
-        47, 197, 24, 28,
+        155, 86, 24, 28,
         //destination rectangle
         this.position.x, this.position.y, 24, 28
       );

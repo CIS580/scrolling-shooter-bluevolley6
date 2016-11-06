@@ -225,6 +225,10 @@ const Player = require('./player');
 const Tilemap = require('./tilemap');
 const Bullet = require('./bullet');
 const Enemy = require('./enemy');
+const Enemy2 = require('./enemy2');
+const Enemy3 = require('./enemy3');
+const Enemy4 = require('./enemy4');
+const Enemy5 = require('./enemy5');
 
 var level1Back = require('../assets/level1/background.json');
 var level1Mid = require('../assets/level1/midground.json');
@@ -242,7 +246,51 @@ var input = {
 var camera = new Camera(canvas);
 var missiles = [];
 var player = new Player([], missiles);
-var enemy = new Enemy(canvas);
+
+var shooting = false;
+
+var enemies = [];
+for(var i = 0; i < 5; i++) {
+  enemies.push(new Enemy(
+    {
+      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+      y: Math.floor(Math.random() * 1000) + 10
+    },
+    canvas
+  ));
+
+  enemies.push(new Enemy2(
+    {
+      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+      y: Math.floor(Math.random() * 1000) + 10
+    },
+    canvas
+  ));
+
+  enemies.push(new Enemy3(
+    {
+      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+      y: Math.floor(Math.random() * 1000) + 10
+    },
+    canvas
+  ));
+
+  enemies.push(new Enemy4(
+    {
+      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+      y: Math.floor(Math.random() * 1000) + 10
+    },
+    canvas
+  ));
+
+  enemies.push(new Enemy5(
+    {
+      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+      y: Math.floor(Math.random() * 1000) + 10
+    },
+    canvas
+  ));
+}
 
 var tilemaps1 = [];
 
@@ -299,8 +347,11 @@ window.onkeydown = function(event) {
       event.preventDefault();
       break;
     case " ":
-      player.fireBullet(canvas);
-      event.preventDefault();
+      if(!shooting) {
+        player.fireBullet(canvas);
+        event.preventDefault();
+        shooting = true;
+      }
       break;
   }
 }
@@ -331,6 +382,9 @@ window.onkeyup = function(event) {
       input.right = false;
       event.preventDefault();
       break;
+    case " ":
+      shooting = false;
+      break;
   }
 }
 
@@ -358,7 +412,9 @@ function update(elapsedTime) {
   player.update(elapsedTime, input);
 
   // update enemies
-  enemy.update(camera);
+  enemies.forEach(function(enemy) {
+    enemy.update(camera, player);
+  });
 
   // update the camera
   camera.update(player.position);
@@ -446,7 +502,9 @@ function renderWorld(elapsedTime, ctx) {
     player.render(elapsedTime, ctx);
 
     // Render the enemies
-    enemy.render(camera, elapsedTime, ctx);
+    enemies.forEach(function(enemy) {
+      enemy.render(camera, elapsedTime, ctx);
+    });
 }
 
 /**
@@ -459,7 +517,7 @@ function renderGUI(elapsedTime, ctx) {
   // TODO: Render the GUI
 }
 
-},{"../assets/level1/background.json":1,"../assets/level1/foreground.json":2,"../assets/level1/midground.json":3,"./bullet":5,"./camera":6,"./enemy":7,"./game":8,"./player":9,"./tilemap":10,"./vector":11}],5:[function(require,module,exports){
+},{"../assets/level1/background.json":1,"../assets/level1/foreground.json":2,"../assets/level1/midground.json":3,"./bullet":5,"./camera":6,"./enemy":7,"./enemy2":8,"./enemy3":9,"./enemy4":10,"./enemy5":11,"./game":12,"./player":13,"./tilemap":15,"./vector":16}],5:[function(require,module,exports){
 "use strict";
 
 const MS_PER_FRAME = 1000/8;
@@ -603,7 +661,7 @@ Camera.prototype.toWorldCoordinates = function(screenCoordinates) {
   return Vector.add(screenCoordinates, this);
 }
 
-},{"./vector":11}],7:[function(require,module,exports){
+},{"./vector":16}],7:[function(require,module,exports){
 "use strict";
 
 /* Classes and Libraries */
@@ -627,12 +685,12 @@ module.exports = exports = Enemy;
  * @constructor Enemy
  * Creates an enemy
  */
-function Enemy(canvas) {
+function Enemy(position, canvas) {
   this.bullets = [];
   this.angle = 0;
-  this.position = {x: 200, y: 200};
+  this.position = {x: position.x, y: position.y};
   this.velocity = {x: 0, y: ENEMY_SPEED};
-  this.img = new Image()
+  this.img = new Image();
   this.img.src = 'assets/enemies.png';
   this.canvas = canvas;
 }
@@ -644,7 +702,7 @@ function Enemy(canvas) {
  * @param {Input} input object defining input, must have
  * boolean properties: up, left, right, down
  */
-Enemy.prototype.update = function(camera) {
+Enemy.prototype.update = function(camera, player) {
 
   this.velocity.y += ENEMY_SPEED;
 
@@ -667,21 +725,21 @@ Enemy.prototype.render = function(camera, elapsedTime, ctx) {
   if(timePassed > 2000 && this.position.y > camera.y) {
     this.bullets.push(new Bullet({
       x:this.position.x+1,
-      y:this.position.y,
+      y:this.position.y+28,
       angle: Math.PI/2},
       this.canvas,
       BULLET_SPEED
     ));
     this.bullets.push(new Bullet({
       x:this.position.x+12,
-      y:this.position.y,
+      y:this.position.y+28,
       angle: Math.PI/2},
       this.canvas,
       BULLET_SPEED
     ));
     this.bullets.push(new Bullet({
       x:this.position.x+23,
-      y:this.position.y,
+      y:this.position.y+28,
       angle: Math.PI/2},
       this.canvas,
       BULLET_SPEED
@@ -705,7 +763,422 @@ Enemy.prototype.render = function(camera, elapsedTime, ctx) {
   ctx.restore();
 }
 
-},{"./bullet":5,"./vector":11}],8:[function(require,module,exports){
+},{"./bullet":5,"./vector":16}],8:[function(require,module,exports){
+"use strict";
+
+/* Classes and Libraries */
+const Vector = require('./vector');
+const Shot = require('./shot');
+//const Missile = require('./missile');
+
+/* Constants */
+const ENEMY_SPEED = .001;
+const BULLET_SPEED = 15;
+
+var timePassed = 0;
+
+/**
+ * @module Enemy
+ * A class representing a enemy's ship
+ */
+module.exports = exports = Enemy2;
+
+/**
+ * @constructor Enemy
+ * Creates an enemy
+ */
+function Enemy2(position, canvas) {
+  this.bullets = [];
+  this.angle = 0;
+  this.position = {x: position.x, y: position.y};
+  this.velocity = {x: 0, y: ENEMY_SPEED};
+  this.img = new Image();
+  this.img.src = 'assets/enemies.png';
+  this.canvas = canvas;
+  this.state = 0;
+}
+
+/**
+ * @function update
+ * Updates the enemy based on the supplied input
+ * @param {DOMHighResTimeStamp} elapedTime
+ * @param {Input} input object defining input, must have
+ * boolean properties: up, left, right, down
+ */
+Enemy2.prototype.update = function(camera, player) {
+
+  this.velocity.y += ENEMY_SPEED;
+
+  // move the enemy
+  this.position.y += this.velocity.y;
+  if(player.position.x < this.position.x) {
+    this.position.x--;
+  } else if (player.position.x > this.position.x) {
+    this.position.x++;
+  }
+
+  this.bullets.forEach(function(shot) {
+    shot.update();
+  })
+}
+
+/**
+ * @function render
+ * Renders the enemy ship in world coordinates
+ * @param {DOMHighResTimeStamp} elapsedTime
+ * @param {CanvasRenderingContext2D} ctx
+ */
+Enemy2.prototype.render = function(camera, elapsedTime, ctx) {
+  timePassed += elapsedTime;
+
+  ctx.save();
+  ctx.drawImage(
+    //image
+    this.img,
+    //source rectangle
+    47, 141, 24, 28,
+    //destination rectangle
+    this.position.x, this.position.y, 24, 28
+  );
+  ctx.restore();
+
+  if(timePassed > 2000 && this.position.y > camera.y && this.bullets.length == 0) {
+    var position = {
+      x: this.position.x+6,
+      y: this.position.y+15
+    };
+
+    var image = {
+      x: 0,
+      y: 56,
+      width: 12,
+      height: 14
+    };
+
+    this.bullets.push(new Shot(
+      position,
+      this.canvas,
+      BULLET_SPEED,
+      'assets/bullets.png',
+      image
+    ));
+  }
+
+  for(var i = 0; i < this.bullets.length; i++) {
+    this.bullets[i].render(elapsedTime, ctx);
+    if(this.bullets[i].state > 4) {
+      this.bullets.splice(i, 1);
+    }
+  }
+}
+
+},{"./shot":14,"./vector":16}],9:[function(require,module,exports){
+"use strict";
+
+/* Classes and Libraries */
+const Vector = require('./vector');
+const Bullet = require('./bullet');
+//const Missile = require('./missile');
+
+/* Constants */
+const ENEMY_SPEED = .001;
+const BULLET_SPEED = -10;
+
+var timePassed = 0;
+
+/**
+ * @module Enemy
+ * A class representing a enemy's ship
+ */
+module.exports = exports = Enemy3;
+
+/**
+ * @constructor Enemy
+ * Creates an enemy
+ */
+function Enemy3(position, canvas) {
+  this.bullets = [];
+  this.angle = 0;
+  this.position = {x: position.x, y: position.y};
+  this.velocity = {x: 0, y: ENEMY_SPEED};
+  this.img = new Image();
+  this.img.src = 'assets/enemies2.png';
+  this.canvas = canvas;
+}
+
+/**
+ * @function update
+ * Updates the enemy based on the supplied input
+ * @param {DOMHighResTimeStamp} elapedTime
+ * @param {Input} input object defining input, must have
+ * boolean properties: up, left, right, down
+ */
+Enemy3.prototype.update = function(camera, player) {
+
+  this.velocity.y += ENEMY_SPEED;
+
+  // move the enemy
+  this.position.y += this.velocity.y;
+  this.position.x--;
+  if(this.position.x < 0) {
+    this.position.x = 960;
+  }
+
+  for(var i = 0; i < this.bullets.length; i++) {
+    this.bullets[i].update(camera);
+  }
+}
+
+/**
+ * @function render
+ * Renders the enemy ship in world coordinates
+ * @param {DOMHighResTimeStamp} elapsedTime
+ * @param {CanvasRenderingContext2D} ctx
+ */
+Enemy3.prototype.render = function(camera, elapsedTime, ctx) {
+  timePassed += elapsedTime;
+  if(timePassed > 1000 && this.position.y > camera.y) {
+    this.bullets.push(new Bullet({
+      x:this.position.x+12,
+      y:this.position.y+28,
+      angle: Math.PI/2},
+      this.canvas,
+      BULLET_SPEED
+    ));
+    timePassed = 0;
+  }
+
+  for(var i = 0; i < this.bullets.length; i++) {
+    this.bullets[i].render(elapsedTime, ctx);
+  }
+
+  ctx.save();
+  ctx.drawImage(
+        //image
+        this.img,
+        //source rectangle
+        155, 113, 24, 28,
+        //destination rectangle
+        this.position.x, this.position.y, 24, 28
+      );
+  ctx.restore();
+}
+
+},{"./bullet":5,"./vector":16}],10:[function(require,module,exports){
+"use strict";
+
+/* Classes and Libraries */
+const Vector = require('./vector');
+const Shot = require('./shot');
+//const Missile = require('./missile');
+
+/* Constants */
+const ENEMY_SPEED = .001;
+const BULLET_SPEED = 15;
+
+var timePassed = 0;
+
+/**
+ * @module Enemy
+ * A class representing a enemy's ship
+ */
+module.exports = exports = Enemy4;
+
+/**
+ * @constructor Enemy
+ * Creates an enemy
+ */
+function Enemy4(position, canvas) {
+  this.bullets = [];
+  this.angle = 0;
+  this.position = {x: position.x, y: position.y};
+  this.velocity = {x: 0, y: ENEMY_SPEED};
+  this.img = new Image();
+  this.img.src = 'assets/enemies.png';
+  this.canvas = canvas;
+  this.state = 0;
+}
+
+/**
+ * @function update
+ * Updates the enemy based on the supplied input
+ * @param {DOMHighResTimeStamp} elapedTime
+ * @param {Input} input object defining input, must have
+ * boolean properties: up, left, right, down
+ */
+Enemy4.prototype.update = function(camera, player) {
+
+  this.velocity.y += ENEMY_SPEED;
+
+  // move the enemy
+  this.position.y += this.velocity.y;
+  this.position.x++;
+  if(this.position.x > 960) {
+    this.position.x = 0;
+  }
+
+  this.bullets.forEach(function(shot) {
+    shot.update();
+  })
+}
+
+/**
+ * @function render
+ * Renders the enemy ship in world coordinates
+ * @param {DOMHighResTimeStamp} elapsedTime
+ * @param {CanvasRenderingContext2D} ctx
+ */
+Enemy4.prototype.render = function(camera, elapsedTime, ctx) {
+  timePassed += elapsedTime;
+
+  ctx.save();
+  ctx.drawImage(
+    //image
+    this.img,
+    //source rectangle
+    47, 0, 24, 28,
+    //destination rectangle
+    this.position.x, this.position.y, 24, 28
+  );
+  ctx.restore();
+
+  if(timePassed > 2000 && this.position.y > camera.y && this.bullets.length == 0) {
+    var position = {
+      x: this.position.x+6,
+      y: this.position.y+15
+    };
+
+    var image = {
+      x: 0,
+      y: 140,
+      width: 12,
+      height: 14
+    };
+
+    this.bullets.push(new Shot(
+      position,
+      this.canvas,
+      BULLET_SPEED,
+      'assets/bullets.png',
+      image
+    ));
+  }
+
+  for(var i = 0; i < this.bullets.length; i++) {
+    this.bullets[i].render(elapsedTime, ctx);
+    this.bullets[i].state = 0;
+    if(this.bullets[i].position.y > (camera.y + 616)) {
+      this.bullets.splice(i, 1);
+    }
+  }
+}
+
+},{"./shot":14,"./vector":16}],11:[function(require,module,exports){
+"use strict";
+
+/* Classes and Libraries */
+const Vector = require('./vector');
+const Bullet = require('./bullet');
+//const Missile = require('./missile');
+
+/* Constants */
+const ENEMY_SPEED = .001;
+const BULLET_SPEED = -10;
+
+var timePassed = 0;
+
+/**
+ * @module Enemy
+ * A class representing a enemy's ship
+ */
+module.exports = exports = Enemy5;
+
+/**
+ * @constructor Enemy
+ * Creates an enemy
+ */
+function Enemy5(position, canvas) {
+  this.bullets = [];
+  this.angle = 0;
+  this.position = {x: position.x, y: position.y};
+  this.velocity = {x: 0, y: ENEMY_SPEED};
+  this.img = new Image();
+  this.img.src = 'assets/enemies2.png';
+  this.canvas = canvas;
+}
+
+/**
+ * @function update
+ * Updates the enemy based on the supplied input
+ * @param {DOMHighResTimeStamp} elapedTime
+ * @param {Input} input object defining input, must have
+ * boolean properties: up, left, right, down
+ */
+Enemy5.prototype.update = function(camera, player) {
+
+  this.velocity.y += ENEMY_SPEED;
+
+  // move the enemy
+  if(player.position.y - 80 > this.position.y) {
+    this.position.y += this.velocity.y
+  } else {
+    this.position.y -= this.velocity.y
+  }
+
+  if(player.position.x - 13 < this.position.x) {
+    this.position.x--;
+  } else if (player.position.x > this.position.x) {
+    this.position.x++;
+  }
+
+  for(var i = 0; i < this.bullets.length; i++) {
+    this.bullets[i].update(camera);
+  }
+}
+
+/**
+ * @function render
+ * Renders the enemy ship in world coordinates
+ * @param {DOMHighResTimeStamp} elapsedTime
+ * @param {CanvasRenderingContext2D} ctx
+ */
+Enemy5.prototype.render = function(camera, elapsedTime, ctx) {
+  timePassed += elapsedTime;
+  if(timePassed > 2000 && this.position.y > camera.y) {
+    this.bullets.push(new Bullet({
+      x:this.position.x+2,
+      y:this.position.y+14,
+      angle: Math.PI/2},
+      this.canvas,
+      BULLET_SPEED
+    ));
+    this.bullets.push(new Bullet({
+      x:this.position.x+22,
+      y:this.position.y+14,
+      angle: Math.PI/2},
+      this.canvas,
+      BULLET_SPEED
+    ));
+    timePassed = 0;
+  }
+
+  for(var i = 0; i < this.bullets.length; i++) {
+    this.bullets[i].render(elapsedTime, ctx);
+  }
+
+  ctx.save();
+  ctx.drawImage(
+        //image
+        this.img,
+        //source rectangle
+        155, 86, 24, 28,
+        //destination rectangle
+        this.position.x, this.position.y, 24, 28
+      );
+  ctx.restore();
+}
+
+},{"./bullet":5,"./vector":16}],12:[function(require,module,exports){
 "use strict";
 
 /**
@@ -763,7 +1236,7 @@ Game.prototype.loop = function(newTime) {
   this.frontCtx.drawImage(this.backBuffer, 0, 0);
 }
 
-},{}],9:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 
 /* Classes and Libraries */
@@ -867,7 +1340,66 @@ Player.prototype.fireMissile = function() {
   }
 }
 
-},{"./bullet":5,"./vector":11}],10:[function(require,module,exports){
+},{"./bullet":5,"./vector":16}],14:[function(require,module,exports){
+"use strict";
+
+const MS_PER_FRAME = 1000/8;
+
+/**
+ * @module exports the Shot class
+ */
+module.exports = exports = Shot;
+
+/**
+ * @constructor Shot
+ * Creates a new shot object
+ * @param {Postition} position object specifying an x and y
+ */
+function Shot(position, canvas, speed, src, image) {
+  this.worldWidth = canvas.width;
+  this.worldHeight = canvas.height;
+  this.position = {
+    x: position.x,
+    y: position.y
+  };
+  this.speed = speed;
+  this.image = new Image();
+  this.image.src = src;
+  this.state = 0
+  this.imageWidth = image.width;
+  this.imageHeight = image.height;
+  this.imageX = image.x;
+  this.imageY = image.y
+}
+
+/**
+ * @function updates the shot object
+ */
+Shot.prototype.update = function() {
+  // Apply velocity
+  this.position.y += 2*this.speed;
+}
+
+/**
+ * @function renders the bullet into the provided context
+ * {DOMHighResTimeStamp} time the elapsed time since the last frame
+ * {CanvasRenderingContext2D} ctx the context to render into
+ */
+Shot.prototype.render = function(time, ctx) {
+  ctx.save();
+  ctx.drawImage(
+    //image
+    this.image,
+    //source rectangle
+    this.state*this.imageWidth + this.imageX, this.imageY, this.imageWidth, this.imageHeight,
+    //destination rectangle
+    this.position.x, this.position.y, this.imageWidth, this.imageHeight
+  );
+  ctx.restore();
+  this.state++;
+}
+
+},{}],15:[function(require,module,exports){
 "use strict";
 
 // Tilemap engine defined using the Module pattern
@@ -982,7 +1514,7 @@ Tilemap.prototype.tileAt = function(x, y, layer) {
   return this.tiles[this.layers[layer].data[x + y*this.mapWidth] - 1];
 }
 
-},{}],11:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 
 /**
