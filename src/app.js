@@ -229,7 +229,7 @@ function renderWorld(elapsedTime, ctx) {
     player.render(elapsedTime, ctx);
 
     // Render the enemies
-    enemy.render(elapsedTime, ctx);
+    enemy.render(camera, elapsedTime, ctx);
 }
 
 /**

@@ -43,7 +43,6 @@ Enemy.prototype.update = function(camera) {
   this.velocity.y += ENEMY_SPEED;
 
   // move the enemy
-  this.position.x += this.velocity.x;
   this.position.y += this.velocity.y;
 
   for(var i = 0; i < this.bullets.length; i++) {
@@ -57,11 +56,25 @@ Enemy.prototype.update = function(camera) {
  * @param {DOMHighResTimeStamp} elapsedTime
  * @param {CanvasRenderingContext2D} ctx
  */
-Enemy.prototype.render = function(elapsedTime, ctx) {
+Enemy.prototype.render = function(camera, elapsedTime, ctx) {
   timePassed += elapsedTime;
-  if(timePassed > 3000) {
+  if(timePassed > 2000 && this.position.y > camera.y) {
     this.bullets.push(new Bullet({
-      x:this.position.x,
+      x:this.position.x+1,
+      y:this.position.y,
+      angle: Math.PI/2},
+      this.canvas,
+      BULLET_SPEED
+    ));
+    this.bullets.push(new Bullet({
+      x:this.position.x+12,
+      y:this.position.y,
+      angle: Math.PI/2},
+      this.canvas,
+      BULLET_SPEED
+    ));
+    this.bullets.push(new Bullet({
+      x:this.position.x+23,
       y:this.position.y,
       angle: Math.PI/2},
       this.canvas,
@@ -75,7 +88,6 @@ Enemy.prototype.render = function(elapsedTime, ctx) {
   }
 
   ctx.save();
-  ctx.translate(this.position.x, this.position.y);
   ctx.drawImage(
         //image
         this.img,
