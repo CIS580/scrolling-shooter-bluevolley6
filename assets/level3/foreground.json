@@ -19,7 +19,7 @@
         {
          "columns":10,
          "firstgid":1,
-         "image":"..\/shapes).png",
+         "image":"./assets/shapes).png",
          "imageheight":1708,
          "imagewidth":240,
          "margin":0,

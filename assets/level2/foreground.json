@@ -19,7 +19,7 @@
         {
          "columns":10,
          "firstgid":1,
-         "image":"..\/shapes).png",
+         "image":"./assets/shapes).png",
          "imageheight":1708,
          "imagewidth":240,
          "margin":0,
@@ -29,11 +29,11 @@
          "tileheight":28,
          "tilewidth":24,
          "transparentcolor":"#000000"
-        }, 
+        },
         {
          "columns":10,
          "firstgid":611,
-         "image":"..\/shapesw.png",
+         "image":"./assets/shapesw.png",
          "imageheight":1652,
          "imagewidth":240,
          "margin":0,
@@ -43,11 +43,11 @@
          "tileheight":28,
          "tilewidth":24,
          "transparentcolor":"#000000"
-        }, 
+        },
         {
          "columns":10,
          "firstgid":1201,
-         "image":"..\/shapesx.png",
+         "image":"./assets/shapesx.png",
          "imageheight":1932,
          "imagewidth":240,
          "margin":0,
@@ -57,11 +57,11 @@
          "tileheight":28,
          "tilewidth":24,
          "transparentcolor":"#000000"
-        }, 
+        },
         {
          "columns":10,
          "firstgid":1891,
-         "image":"..\/shapesy.png",
+         "image":"./assets/shapesy.png",
          "imageheight":1876,
          "imagewidth":240,
          "margin":0,
@@ -71,11 +71,11 @@
          "tileheight":28,
          "tilewidth":24,
          "transparentcolor":"#000000"
-        }, 
+        },
         {
          "columns":10,
          "firstgid":2561,
-         "image":"..\/shapesz.png",
+         "image":"./assets/shapesz.png",
          "imageheight":1736,
          "imagewidth":240,
          "margin":0,

@@ -3,7 +3,6 @@
 /* Classes and Libraries */
 const Vector = require('./vector');
 const Bullet = require('./bullet');
-//const Missile = require('./missile');
 
 /* Constants */
 const PLAYER_SPEED = 5;
@@ -21,8 +20,6 @@ module.exports = exports = Player;
  */
 function Player(bullets, missiles) {
   this.bullets = bullets;
-  this.missiles = missiles;
-  this.missileCount = 4;
   this.angle = 0;
   this.position = {x: 200, y: 2450};
   this.velocity = {x: 0, y: 0};
@@ -41,16 +38,26 @@ Player.prototype.update = function(elapsedTime, input) {
 
   // set the velocity
   this.velocity.x = 0;
-  if(input.left) this.velocity.x -= PLAYER_SPEED;
-  if(input.right) this.velocity.x += PLAYER_SPEED;
+  if(input.left) {
+    this.velocity.x -= PLAYER_SPEED;
+  } else if(input.right) {
+    this.velocity.x += PLAYER_SPEED;
+  }
   this.velocity.y = 0;
-  if(input.up) this.velocity.y -= PLAYER_SPEED / 2;
-  if(input.down) this.velocity.y += PLAYER_SPEED / 2;
+  if(input.up) {
+    this.velocity.y -= PLAYER_SPEED / 2;
+  } else if(input.down) {
+    this.velocity.y += PLAYER_SPEED / 2;
+  }
 
   // determine player angle
-  this.angle = 0;
-  if(this.velocity.x < 0) this.angle = -1;
-  if(this.velocity.x > 0) this.angle = 1;
+  if(this.velocity.x < 0) {
+    this.angle = -1;
+  } else if(this.velocity.x > 0) {
+    this.angle = 1;
+  } else {
+    this.angle = 0;
+  }
 
   // move the player
   this.position.x += this.velocity.x;
@@ -60,7 +67,6 @@ Player.prototype.update = function(elapsedTime, input) {
   if(this.position.x < 0) this.position.x = 0;
   if(this.position.x > 960) this.position.x = 960;
   if(this.position.y > 2450) this.position.y = 2450;
-  if(this.position.y < 616/2) this.position.y = 616/2;
 }
 
 /**
@@ -85,18 +91,4 @@ Player.prototype.fireBullet = function(canvas) {
     canvas,
     BULLET_SPEED
   ));
-}
-
-/**
- * @function fireMissile
- * Fires a missile, if the player still has missiles
- * to fire.
- */
-Player.prototype.fireMissile = function() {
-  if(this.missileCount > 0){
-    var position = Vector.add(this.position, {x:0, y:30})
-    var missile = new Missile(position);
-    this.missiles.push(missile);
-    this.missileCount--;
-  }
 }

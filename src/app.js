@@ -7,15 +7,25 @@ const Camera = require('./camera');
 const Player = require('./player');
 const Tilemap = require('./tilemap');
 const Bullet = require('./bullet');
-const Enemy = require('./enemy');
+const Enemy = require('./enemy1');
 const Enemy2 = require('./enemy2');
 const Enemy3 = require('./enemy3');
 const Enemy4 = require('./enemy4');
 const Enemy5 = require('./enemy5');
 
+var level = 0;
+
 var level1Back = require('../assets/level1/background.json');
 var level1Mid = require('../assets/level1/midground.json');
 var level1Fore = require('../assets/level1/foreground.json');
+
+var level2Back = require('../assets/level2/background.json');
+var level2Mid = require('../assets/level2/midground.json');
+var level2Fore = require('../assets/level2/foreground.json');
+
+var level3Back = require('../assets/level3/background.json');
+var level3Mid = require('../assets/level3/midground.json');
+var level3Fore = require('../assets/level3/foreground.json');
 
 /* Global variables */
 var canvas = document.getElementById('screen');
@@ -29,71 +39,15 @@ var input = {
 var camera = new Camera(canvas);
 var missiles = [];
 var player = new Player([], missiles);
-
 var shooting = false;
 
 var enemies = [];
-for(var i = 0; i < 5; i++) {
-  enemies.push(new Enemy(
-    {
-      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
-      y: Math.floor(Math.random() * 1000) + 10
-    },
-    canvas
-  ));
+var enemyCount;
 
-  enemies.push(new Enemy2(
-    {
-      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
-      y: Math.floor(Math.random() * 1000) + 10
-    },
-    canvas
-  ));
-
-  enemies.push(new Enemy3(
-    {
-      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
-      y: Math.floor(Math.random() * 1000) + 10
-    },
-    canvas
-  ));
-
-  enemies.push(new Enemy4(
-    {
-      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
-      y: Math.floor(Math.random() * 1000) + 10
-    },
-    canvas
-  ));
-
-  enemies.push(new Enemy5(
-    {
-      x: Math.floor(Math.random() * (canvas.width-40))+ 20,
-      y: Math.floor(Math.random() * 1000) + 10
-    },
-    canvas
-  ));
-}
-
-var tilemaps1 = [];
-
-tilemaps1.push(new Tilemap(level1Back, {
-  onload: function() {
-    checkMapsLoaded();
-  }
-}));
-tilemaps1.push(new Tilemap(level1Mid, {
-  onload: function() {
-    checkMapsLoaded();
-  }
-}));
-tilemaps1.push(new Tilemap(level1Fore, {
-  onload: function() {
-    checkMapsLoaded();
-  }
-}));
-
+var tilemaps = [];
 var mapCount = 3;
+
+
 function checkMapsLoaded(){
   mapCount--;
   if(mapCount == 0){
@@ -194,10 +148,80 @@ function update(elapsedTime) {
   // update the player
   player.update(elapsedTime, input);
 
+  if(level == 0) {
+    tilemaps.push(new Tilemap(level1Back, {
+      onload: function() {
+        checkMapsLoaded();
+      }
+    }));
+    tilemaps.push(new Tilemap(level1Mid, {
+      onload: function() {
+        checkMapsLoaded();
+      }
+    }));
+    tilemaps.push(new Tilemap(level1Fore, {
+      onload: function() {
+        checkMapsLoaded();
+      }
+    }));
+    newEnemies(3);
+    enemyCount = enemies.length;
+    level++;
+  }
+
+  if(player.position.y < 0) {
+    level++;
+    player.position = {x: 200, y: 2450};
+    if(level == 2) {
+      enemies = [];
+      tilemaps = [];
+      newEnemies(4);
+      enemyCount = enemies.length;
+      tilemaps.push(new Tilemap(level2Back, {
+        onload: function() {
+          checkMapsLoaded();
+        }
+      }));
+      tilemaps.push(new Tilemap(level2Mid, {
+        onload: function() {
+          checkMapsLoaded();
+        }
+      }));
+      tilemaps.push(new Tilemap(level2Fore, {
+        onload: function() {
+          checkMapsLoaded();
+        }
+      }));
+    } else if(level == 3) {
+      enemies = [];
+      tilemaps = [];
+      newEnemies(5);
+      enemyCount = enemies.length;
+      tilemaps.push(new Tilemap(level3Back, {
+        onload: function() {
+          checkMapsLoaded();
+        }
+      }));
+      tilemaps.push(new Tilemap(level3Mid, {
+        onload: function() {
+          checkMapsLoaded();
+        }
+      }));
+      tilemaps.push(new Tilemap(level3Fore, {
+        onload: function() {
+          checkMapsLoaded();
+        }
+      }));
+    }
+  }
+
   // update enemies
-  enemies.forEach(function(enemy) {
-    enemy.update(camera, player);
-  });
+  for(var i = 0; i < enemies.length; i++) {
+    enemies[i].update(camera, player);
+    if(enemies[i].explodingState == 17) {
+      enemies.splice(i, 1);
+    }
+  }
 
   // update the camera
   camera.update(player.position);
@@ -210,17 +234,8 @@ function update(elapsedTime) {
     }
   }
 
-  // Update missiles
-  var markedForRemoval = [];
-  missiles.forEach(function(missile, i){
-    missile.update(elapsedTime);
-    if(Math.abs(missile.position.x - camera.x) > camera.width * 2)
-      markedForRemoval.unshift(i);
-  });
-  // Remove missiles that have gone off-screen
-  markedForRemoval.forEach(function(index){
-    missiles.splice(index, 1);
-  });
+  //check to see if bullet hit an enemy
+  bulletCollsion();
 }
 
 /**
@@ -235,20 +250,14 @@ function render(elapsedTime, ctx) {
   ctx.fillRect(0, 0, 1024, 786);
 
   // TODO: Render background
-  ctx.save();
-  ctx.translate(0, -camera.y);
-  tilemaps1[0].render(ctx);
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(0, -camera.y*.6);
-  tilemaps1[1].render(ctx);
-  ctx.restore();
-
-  ctx.save();
-  ctx.translate(0, -camera.y*.2);
-  tilemaps1[2].render(ctx);
-  ctx.restore();
+  if(level <= 3) {
+    renderMaps(elapsedTime, ctx);
+    if(player.position.y < 0) {
+      performanceScreen(elapsedTime, ctx);
+    }
+  } else {
+    game.gameOver = true;
+  }
 
   // Transform the coordinate system using
   // the camera position BEFORE rendering
@@ -263,6 +272,29 @@ function render(elapsedTime, ctx) {
   // Render the GUI without transforming the
   // coordinate system
   renderGUI(elapsedTime, ctx);
+
+  if(game.gameOver) {
+    ctx.fillStyle = "red";
+    ctx.font = "bold 32px Arial";
+    ctx.fillText("Game Over", canvas.width/2 - 90, canvas.height/2);
+  }
+}
+
+function renderMaps(elapsedTime, ctx) {
+  ctx.save();
+  ctx.translate(0, -camera.y);
+  tilemaps[0].render(ctx);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(0, -camera.y*.6);
+  tilemaps[1].render(ctx);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(0, -camera.y*.2);
+  tilemaps[2].render(ctx);
+  ctx.restore();
 }
 
 /**
@@ -288,6 +320,69 @@ function renderWorld(elapsedTime, ctx) {
     enemies.forEach(function(enemy) {
       enemy.render(camera, elapsedTime, ctx);
     });
+}
+
+function newEnemies(count) {
+  for(var i = 0; i < count; i++) {
+    enemies.push(new Enemy(
+      {
+        x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+        y: Math.floor(Math.random() * 1000) + 10
+      },
+      canvas
+    ));
+
+    enemies.push(new Enemy2(
+      {
+        x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+        y: Math.floor(Math.random() * 1000) + 10
+      },
+      canvas
+    ));
+
+    enemies.push(new Enemy3(
+      {
+        x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+        y: Math.floor(Math.random() * 1000) + 10
+      },
+      canvas
+    ));
+
+    enemies.push(new Enemy4(
+      {
+        x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+        y: Math.floor(Math.random() * 1000) + 10
+      },
+      canvas
+    ));
+
+    enemies.push(new Enemy5(
+      {
+        x: Math.floor(Math.random() * (canvas.width-40))+ 20,
+        y: Math.floor(Math.random() * 1000) + 10
+      },
+      canvas
+    ));
+  }
+}
+
+//check to see if bullet hit an enemy
+function bulletCollsion(){
+  console.log(enemies.length);
+  for(var i = 0; i < enemies.length; i++){
+    for(var j = 0; j < player.bullets.length; j++){
+      if (player.bullets[j].position.x < (enemies[i].position.x + enemies[i].width) && player.bullets[j].position.x > enemies[i].position.x
+        && player.bullets[j].position.y < (enemies[i].position.y + enemies[i].height) && player.bullets[j].position.y > enemies[i].position.y) {
+          player.bullets.splice(j,1);
+          enemies[i].exploding = true;
+      }
+    }
+  }
+  return;
+}
+
+function performanceScreen() {
+
 }
 
 /**
