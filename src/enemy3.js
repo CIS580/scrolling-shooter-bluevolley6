@@ -50,7 +50,7 @@ Enemy3.prototype.update = function(camera, player) {
     this.position.y += this.velocity.y;
     this.position.x--;
     if(this.position.x < 0) {
-      this.position.x = 960;
+      this.position.x = 936;
     }
 
     for(var i = 0; i < this.bullets.length; i++) {

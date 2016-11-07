@@ -50,7 +50,7 @@ Enemy4.prototype.update = function(camera, player) {
     // move the enemy
     this.position.y += this.velocity.y;
     this.position.x++;
-    if(this.position.x > 960) {
+    if(this.position.x > 936) {
       this.position.x = 0;
     }
 
