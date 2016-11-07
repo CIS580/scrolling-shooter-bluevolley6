@@ -90,7 +90,7 @@ window.onkeydown = function(event) {
       event.preventDefault();
       break;
     case " ":
-      if(!shooting && !pause) {
+      if(!shooting && !pause && !player.exploding) {
         player.fireBullet(canvas);
         event.preventDefault();
         shooting = true;
@@ -157,6 +157,11 @@ function update(elapsedTime, ctx) {
   if(!pause) {
     // update the player
     player.update(elapsedTime, input);
+    if(player.explodingState == 17) {
+      player.exploding = false;
+      player.explodingState = 0;
+      player.img.src = 'assets/tyrian.shp.007D3C.png';
+    }
 
     if(level == 0) {
       tilemaps.push(new Tilemap(level1Back, {
@@ -307,11 +312,10 @@ function render(elapsedTime, ctx) {
       ctx.translate(-camera.x, -camera.y);
       renderWorld(elapsedTime, ctx);
       ctx.restore();
-
-      // Render the GUI without transforming the
-      // coordinate system
-      renderGUI(elapsedTime, ctx);
     }
+    // Render the GUI without transforming the
+    // coordinate system
+    renderGUI(elapsedTime, ctx);
   }
 }
 
@@ -342,11 +346,6 @@ function renderMaps(elapsedTime, ctx) {
 function renderWorld(elapsedTime, ctx) {
     // Render the bullets
     player.bullets.forEach(function(bullet){bullet.render(elapsedTime, ctx);});
-
-    // Render the missiles
-    missiles.forEach(function(missile) {
-      missile.render(elapsedTime, ctx);
-    });
 
     // Render the player
     player.render(elapsedTime, ctx);
@@ -403,16 +402,14 @@ function newEnemies(count) {
 
 //check to see if bullet hit an enemy
 function bulletCollsion(){
-  console.log(enemies.length);
-  for(var i = 0; i < enemies.length; i++){
-    for(var j = 0; j < player.bullets.length; j++){
+  for(var i = 0; i < enemies.length; i++) {
+    for(var j = 0; j < player.bullets.length; j++) {
       if(!enemies[i].exploding) {
         if(player.bullets[j].position.x < (enemies[i].position.x + enemies[i].width) && player.bullets[j].position.x > enemies[i].position.x
           && player.bullets[j].position.y < (enemies[i].position.y + enemies[i].height) && player.bullets[j].position.y > enemies[i].position.y) {
             player.bullets.splice(j,1);
             enemies[i].exploding = true;
             player.score += 100;
-            console.log(player.score);
             return;
         }
       }
@@ -423,12 +420,34 @@ function bulletCollsion(){
 
 //check to see if player got shot
 function playerShot() {
-
+  for(var i = 0; i < enemies.length; i++) {
+    for(var j = 0; j < enemies[i].bullets.length; j++) {
+      if(!enemies[i].exploding && !player.exploding) {
+        if(enemies[i].bullets[j].position.x < (player.position.x + player.width) && enemies[i].bullets[j].position.x > player.position.x
+          && enemies[i].bullets[j].position.y < (player.position.y + player.height) && enemies[i].bullets[j].position.y > player.position.y) {
+            enemies[i].bullets.splice(j,1);
+            health -= 10;
+            if(health == 0) {
+              lives --;
+              if(lives == 0) {
+                game.gameOver = true;
+              } else {
+                health = 100;
+              }
+              player.exploding = true;
+              return;
+            }
+            return;
+          }
+      }
+    }
+  }
+  return;
 }
 
 //check to see if player hit an enemy
 function playerCollision() {
-  for(var i = 0; i < enemies.length; i++){
+  for(var i = 0; i < enemies.length; i++) {
     if(!enemies[i].exploding) {
       if(player.position.x < (enemies[i].position.x + enemies[i].width) && player.position.x > enemies[i].position.x
         && player.position.y < (enemies[i].position.y + enemies[i].height) && player.position.y > enemies[i].position.y) {
@@ -438,12 +457,20 @@ function playerCollision() {
             collisionTime = 0;
             if(health == 0) {
               lives --;
-              health = 100;
+              if(lives == 0) {
+                game.gameOver = true;
+              } else {
+                health = 100;
+              }
+              player.exploding = true;
+              return;
             }
+            return;
           }
         }
     }
   }
+  return;
 }
 
 //Summary of players performance

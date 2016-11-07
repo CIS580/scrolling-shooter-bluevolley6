@@ -26,6 +26,10 @@ function Player(bullets, missiles) {
   this.img = new Image()
   this.img.src = 'assets/tyrian.shp.007D3C.png';
   this.score = 0;
+  this.exploding = false;
+  this.explodingState = 0;
+  this.width = 24;
+  this.height = 28;
 }
 
 /**
@@ -36,38 +40,39 @@ function Player(bullets, missiles) {
  * boolean properties: up, left, right, down
  */
 Player.prototype.update = function(elapsedTime, input) {
+  if(this.exploding == false) {
+    // set the velocity
+    this.velocity.x = 0;
+    if(input.left) {
+      this.velocity.x -= PLAYER_SPEED;
+    } else if(input.right) {
+      this.velocity.x += PLAYER_SPEED;
+    }
+    this.velocity.y = 0;
+    if(input.up) {
+      this.velocity.y -= PLAYER_SPEED / 2;
+    } else if(input.down) {
+      this.velocity.y += PLAYER_SPEED / 2;
+    }
 
-  // set the velocity
-  this.velocity.x = 0;
-  if(input.left) {
-    this.velocity.x -= PLAYER_SPEED;
-  } else if(input.right) {
-    this.velocity.x += PLAYER_SPEED;
+    // determine player angle
+    if(this.velocity.x < 0) {
+      this.angle = -1;
+    } else if(this.velocity.x > 0) {
+      this.angle = 1;
+    } else {
+      this.angle = 0;
+    }
+
+    // move the player
+    this.position.x += this.velocity.x;
+    this.position.y += this.velocity.y;
+
+    // don't let the player move off-screen
+    if(this.position.x < 0) this.position.x = 0;
+    if(this.position.x > 960) this.position.x = 960;
+    if(this.position.y > 2450) this.position.y = 2450;
   }
-  this.velocity.y = 0;
-  if(input.up) {
-    this.velocity.y -= PLAYER_SPEED / 2;
-  } else if(input.down) {
-    this.velocity.y += PLAYER_SPEED / 2;
-  }
-
-  // determine player angle
-  if(this.velocity.x < 0) {
-    this.angle = -1;
-  } else if(this.velocity.x > 0) {
-    this.angle = 1;
-  } else {
-    this.angle = 0;
-  }
-
-  // move the player
-  this.position.x += this.velocity.x;
-  this.position.y += this.velocity.y;
-
-  // don't let the player move off-screen
-  if(this.position.x < 0) this.position.x = 0;
-  if(this.position.x > 960) this.position.x = 960;
-  if(this.position.y > 2450) this.position.y = 2450;
 }
 
 /**
@@ -77,11 +82,37 @@ Player.prototype.update = function(elapsedTime, input) {
  * @param {CanvasRenderingContext2D} ctx
  */
 Player.prototype.render = function(elapsedTime, ctx) {
-  var offset = this.angle * 23;
-  ctx.save();
-  ctx.translate(this.position.x, this.position.y);
-  ctx.drawImage(this.img, 48+offset, 57, 23, 27, -12.5, -12, 23, 27);
-  ctx.restore();
+  if(this.exploding == false) {
+    var offset = this.angle * 23;
+    ctx.save();
+    ctx.translate(this.position.x, this.position.y);
+    ctx.drawImage(this.img, 47+offset, 57, 24, 28, -12.5, -12, this.width, this.height);
+    ctx.restore();
+  } else {
+    this.img.src = 'assets/explosions.png';
+    ctx.save();
+    ctx.drawImage(
+          //image
+          this.img,
+          //source rectangle
+          12*this.explodingState, 0, 12, 28,
+          //destination rectangle
+          this.position.x, this.position.y, 12, this.height
+        );
+    ctx.restore();
+
+    ctx.save();
+    ctx.drawImage(
+          //image
+          this.img,
+          //source rectangle
+          12*this.explodingState, 28, 12, 28,
+          //destination rectangle
+          this.position.x+12, this.position.y, 12, this.height
+        );
+    ctx.restore();
+    this.explodingState++;
+  }
 }
 
 Player.prototype.fireBullet = function(canvas) {
