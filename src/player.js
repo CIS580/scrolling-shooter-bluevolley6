@@ -96,18 +96,8 @@ Player.prototype.render = function(elapsedTime, ctx) {
         if(this.bullets[i].position.y < camera.y) {
           this.bullets[i].alive = false;
         }
-        if(this.type == 1) { //fire
-          if(this.bullets[i].state > 4) {
-            this.bullets.splice(i, 1);
-          }
-        } else if(this.type == 2) { //banana
-          if(this.bullets[i].state > 3) {
-            this.bullets.splice(i, 1);
-          }
-        } else { //star
-          if(this.bullets[i].state > 9) {
-            this.bullets.splice(i, 1);
-          }
+        if(this.bullets[i].state > 3) {
+          this.bullets.splice(i, 1);
         }
       }
     }
@@ -162,7 +152,7 @@ Player.prototype.fireBullet = function(canvas) {
     this.bullets.push(new Shot(
       position,
       canvas,
-      -BULLET_SPEED,
+      -BULLET_SPEED/2,
       'assets/bullets.png',
       image
     ));
@@ -181,7 +171,7 @@ Player.prototype.fireBullet = function(canvas) {
     this.bullets.push(new Shot(
       position,
       canvas,
-      -BULLET_SPEED,
+      -BULLET_SPEED/2,
       'assets/bullets.png',
       image
     ));
@@ -200,7 +190,7 @@ Player.prototype.fireBullet = function(canvas) {
     this.bullets.push(new Shot(
       position,
       canvas,
-      -BULLET_SPEED,
+      -BULLET_SPEED/2,
       'assets/bullets.png',
       image
     ));

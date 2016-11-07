@@ -514,8 +514,8 @@ function playerCollision() {
 function powerupCollision() {
   for(var i = 0; i < powerups.length; i++) {
     if(!player.exploding) {
-      if(powerups[i].position.x < (player.position.x + player.width) && powerups[i].position.x > player.position.x
-        && powerups[i].position.y < (player.position.y + player.height) && powerups[i].position.y > player.position.y) {
+      if(player.position.x < (powerups[i].position.x + powerups[i].width) && player.position.x > powerups[i].position.x
+        && player.position.y < (powerups[i].position.y + powerups[i].height) && player.position.y > powerups[i].position.y) {
           player.powerup = powerups[i].type;
           powerups.splice(i, 1);
           return;
@@ -537,9 +537,12 @@ function performanceScreen(time, ctx) {
 
   ctx.fillStyle = "green";
   ctx.font = "bold 32px Arial";
-  ctx.fillText("Enemies killed:         " + enemiesKilled + "/" + enemyCount, canvas.width/2 - 300, canvas.height/2 - 30);
-  ctx.fillText("Current health:         " + health + "%", canvas.width/2 - 297, canvas.height/2 + 30);
-  ctx.fillText(" Current score:         " + player.score, canvas.width/2 - 297, canvas.height/2 + 90);
+  ctx.fillText("Enemies killed:         " + enemiesKilled + "/" + enemyCount, canvas.width/2 - 300, canvas.height/2 - 40);
+  ctx.fillText("Current health:         " + health + "%", canvas.width/2 - 297, canvas.height/2 + 20);
+  ctx.fillText(" Current score:         " + player.score, canvas.width/2 - 297, canvas.height/2 + 80);
+
+  ctx.font = "bold 16px Arial";
+  ctx.fillText("Press Spacebar to Continue", canvas.width/2 - 220, canvas.height/2 + 140);
 }
 
 /**

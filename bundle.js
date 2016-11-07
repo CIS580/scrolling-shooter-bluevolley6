@@ -1012,8 +1012,8 @@ function playerCollision() {
 function powerupCollision() {
   for(var i = 0; i < powerups.length; i++) {
     if(!player.exploding) {
-      if(powerups[i].position.x < (player.position.x + player.width) && powerups[i].position.x > player.position.x
-        && powerups[i].position.y < (player.position.y + player.height) && powerups[i].position.y > player.position.y) {
+      if(player.position.x < (powerups[i].position.x + powerups[i].width) && player.position.x > powerups[i].position.x
+        && player.position.y < (powerups[i].position.y + powerups[i].height) && player.position.y > powerups[i].position.y) {
           player.powerup = powerups[i].type;
           powerups.splice(i, 1);
           return;
@@ -1035,9 +1035,12 @@ function performanceScreen(time, ctx) {
 
   ctx.fillStyle = "green";
   ctx.font = "bold 32px Arial";
-  ctx.fillText("Enemies killed:         " + enemiesKilled + "/" + enemyCount, canvas.width/2 - 300, canvas.height/2 - 30);
-  ctx.fillText("Current health:         " + health + "%", canvas.width/2 - 297, canvas.height/2 + 30);
-  ctx.fillText(" Current score:         " + player.score, canvas.width/2 - 297, canvas.height/2 + 90);
+  ctx.fillText("Enemies killed:         " + enemiesKilled + "/" + enemyCount, canvas.width/2 - 300, canvas.height/2 - 40);
+  ctx.fillText("Current health:         " + health + "%", canvas.width/2 - 297, canvas.height/2 + 20);
+  ctx.fillText(" Current score:         " + player.score, canvas.width/2 - 297, canvas.height/2 + 80);
+
+  ctx.font = "bold 16px Arial";
+  ctx.fillText("Press Spacebar to Continue", canvas.width/2 - 220, canvas.height/2 + 140);
 }
 
 /**
@@ -2041,18 +2044,8 @@ Player.prototype.render = function(elapsedTime, ctx) {
         if(this.bullets[i].position.y < camera.y) {
           this.bullets[i].alive = false;
         }
-        if(this.type == 1) { //fire
-          if(this.bullets[i].state > 4) {
-            this.bullets.splice(i, 1);
-          }
-        } else if(this.type == 2) { //banana
-          if(this.bullets[i].state > 3) {
-            this.bullets.splice(i, 1);
-          }
-        } else { //star
-          if(this.bullets[i].state > 9) {
-            this.bullets.splice(i, 1);
-          }
+        if(this.bullets[i].state > 3) {
+          this.bullets.splice(i, 1);
         }
       }
     }
@@ -2107,7 +2100,7 @@ Player.prototype.fireBullet = function(canvas) {
     this.bullets.push(new Shot(
       position,
       canvas,
-      -BULLET_SPEED,
+      -BULLET_SPEED/2,
       'assets/bullets.png',
       image
     ));
@@ -2126,7 +2119,7 @@ Player.prototype.fireBullet = function(canvas) {
     this.bullets.push(new Shot(
       position,
       canvas,
-      -BULLET_SPEED,
+      -BULLET_SPEED/2,
       'assets/bullets.png',
       image
     ));
@@ -2145,7 +2138,7 @@ Player.prototype.fireBullet = function(canvas) {
     this.bullets.push(new Shot(
       position,
       canvas,
-      -BULLET_SPEED,
+      -BULLET_SPEED/2,
       'assets/bullets.png',
       image
     ));
