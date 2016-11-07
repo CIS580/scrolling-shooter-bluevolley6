@@ -1,9 +1,7 @@
 "use strict";
 
 /* Classes and Libraries */
-const Vector = require('./vector');
 const Bullet = require('./bullet');
-//const Missile = require('./missile');
 
 /* Constants */
 const ENEMY_SPEED = .001;

@@ -27,6 +27,7 @@ function Shot(position, canvas, speed, src, image) {
   this.imageHeight = image.height;
   this.imageX = image.x;
   this.imageY = image.y
+  this.alive = true;
 }
 
 /**

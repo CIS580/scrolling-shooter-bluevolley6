@@ -500,7 +500,6 @@ module.exports={ "height":88,
 
 /* Classes and Libraries */
 const Game = require('./game');
-const Vector = require('./vector');
 const Camera = require('./camera');
 const Player = require('./player');
 const Tilemap = require('./tilemap');
@@ -510,6 +509,7 @@ const Enemy2 = require('./enemy2');
 const Enemy3 = require('./enemy3');
 const Enemy4 = require('./enemy4');
 const Enemy5 = require('./enemy5');
+const Powerup = require('./powerups');
 
 var level = 0;
 var pause = false;
@@ -543,6 +543,7 @@ var camera = new Camera(canvas);
 var missiles = [];
 var player = new Player([], missiles);
 var shooting = false;
+var powerups = [];
 
 var enemies = [];
 var enemyCount;
@@ -678,6 +679,7 @@ function update(elapsedTime, ctx) {
         }
       }));
       newEnemies(3);
+      newPowerups(3);
       enemyCount = enemies.length;
       level++;
     }
@@ -691,6 +693,7 @@ function update(elapsedTime, ctx) {
         enemies = [];
         tilemaps = [];
         newEnemies(4);
+        newPowerups(4);
         enemyCount = enemies.length;
         tilemaps.push(new Tilemap(level2Back, {
           onload: function() {
@@ -713,6 +716,7 @@ function update(elapsedTime, ctx) {
         enemies = [];
         tilemaps = [];
         newEnemies(5);
+        newPowerups(5);
         enemyCount = enemies.length;
         tilemaps.push(new Tilemap(level3Back, {
           onload: function() {
@@ -766,6 +770,9 @@ function update(elapsedTime, ctx) {
         colliding = false;
       }
     }
+
+    //check to see if player hit a powerup
+    powerupCollision();
   }
 }
 
@@ -843,7 +850,7 @@ function renderMaps(elapsedTime, ctx) {
   */
 function renderWorld(elapsedTime, ctx) {
     // Render the bullets
-    player.bullets.forEach(function(bullet){bullet.render(elapsedTime, ctx);});
+    //player.bullets.forEach(function(bullet){bullet.render(elapsedTime, ctx);});
 
     // Render the player
     player.render(elapsedTime, ctx);
@@ -852,6 +859,37 @@ function renderWorld(elapsedTime, ctx) {
     enemies.forEach(function(enemy) {
       enemy.render(camera, elapsedTime, ctx);
     });
+
+    // Render the powerups
+    powerups.forEach(function(powerup) {
+      powerup.render(elapsedTime, ctx);
+    })
+}
+
+function newPowerups(count) {
+  for(var i = 0; i < count; i++) {
+    powerups.push(new Powerup(
+      {
+        x: Math.floor(Math.random() * (canvas.width-240))+ 20,
+        y: Math.floor(Math.random() * (canvas.height - 20)) + 10
+      },
+      1
+    ));
+    powerups.push(new Powerup(
+      {
+        x: Math.floor(Math.random() * (canvas.width-240))+ 20,
+        y: Math.floor(Math.random() * (canvas.height - 20)) + 10
+      },
+      2
+    ));
+    powerups.push(new Powerup(
+      {
+        x: Math.floor(Math.random() * (canvas.width-240))+ 20,
+        y: Math.floor(Math.random() * (canvas.height - 20)) + 10
+      },
+      3
+    ));
+  }
 }
 
 function newEnemies(count) {
@@ -971,6 +1009,20 @@ function playerCollision() {
   return;
 }
 
+function powerupCollision() {
+  for(var i = 0; i < powerups.length; i++) {
+    if(!player.exploding) {
+      if(powerups[i].position.x < (player.position.x + player.width) && powerups[i].position.x > player.position.x
+        && powerups[i].position.y < (player.position.y + player.height) && powerups[i].position.y > player.position.y) {
+          player.powerup = powerups[i].type;
+          powerups.splice(i, 1);
+          return;
+        }
+    }
+  }
+  return;
+}
+
 //Summary of players performance
 function performanceScreen(time, ctx) {
   pause = true;
@@ -1023,7 +1075,7 @@ function renderGUI(elapsedTime, ctx) {
   ctx.fillRect(1000, 500, health, 20);
 }
 
-},{"../assets/level1/background.json":1,"../assets/level1/foreground.json":2,"../assets/level1/midground.json":3,"../assets/level2/background.json":4,"../assets/level2/foreground.json":5,"../assets/level2/midground.json":6,"../assets/level3/background.json":7,"../assets/level3/foreground.json":8,"../assets/level3/midground.json":9,"./bullet":11,"./camera":12,"./enemy1":13,"./enemy2":14,"./enemy3":15,"./enemy4":16,"./enemy5":17,"./game":18,"./player":19,"./tilemap":21,"./vector":22}],11:[function(require,module,exports){
+},{"../assets/level1/background.json":1,"../assets/level1/foreground.json":2,"../assets/level1/midground.json":3,"../assets/level2/background.json":4,"../assets/level2/foreground.json":5,"../assets/level2/midground.json":6,"../assets/level3/background.json":7,"../assets/level3/foreground.json":8,"../assets/level3/midground.json":9,"./bullet":11,"./camera":12,"./enemy1":13,"./enemy2":14,"./enemy3":15,"./enemy4":16,"./enemy5":17,"./game":18,"./player":19,"./powerups":20,"./tilemap":22}],11:[function(require,module,exports){
 "use strict";
 
 const MS_PER_FRAME = 1000/8;
@@ -1167,13 +1219,11 @@ Camera.prototype.toWorldCoordinates = function(screenCoordinates) {
   return Vector.add(screenCoordinates, this);
 }
 
-},{"./vector":22}],13:[function(require,module,exports){
+},{"./vector":23}],13:[function(require,module,exports){
 "use strict";
 
 /* Classes and Libraries */
-const Vector = require('./vector');
 const Bullet = require('./bullet');
-//const Missile = require('./missile');
 
 /* Constants */
 const ENEMY_SPEED = .001;
@@ -1300,13 +1350,11 @@ Enemy.prototype.render = function(camera, elapsedTime, ctx) {
   }
 }
 
-},{"./bullet":11,"./vector":22}],14:[function(require,module,exports){
+},{"./bullet":11}],14:[function(require,module,exports){
 "use strict";
 
 /* Classes and Libraries */
-const Vector = require('./vector');
 const Shot = require('./shot');
-//const Missile = require('./missile');
 
 /* Constants */
 const ENEMY_SPEED = .001;
@@ -1440,13 +1488,11 @@ Enemy2.prototype.render = function(camera, elapsedTime, ctx) {
   }
 }
 
-},{"./shot":20,"./vector":22}],15:[function(require,module,exports){
+},{"./shot":21}],15:[function(require,module,exports){
 "use strict";
 
 /* Classes and Libraries */
-const Vector = require('./vector');
 const Bullet = require('./bullet');
-//const Missile = require('./missile');
 
 /* Constants */
 const ENEMY_SPEED = .001;
@@ -1563,13 +1609,11 @@ Enemy3.prototype.render = function(camera, elapsedTime, ctx) {
   }
 }
 
-},{"./bullet":11,"./vector":22}],16:[function(require,module,exports){
+},{"./bullet":11}],16:[function(require,module,exports){
 "use strict";
 
 /* Classes and Libraries */
-const Vector = require('./vector');
 const Shot = require('./shot');
-//const Missile = require('./missile');
 
 /* Constants */
 const ENEMY_SPEED = .001;
@@ -1703,13 +1747,11 @@ Enemy4.prototype.render = function(camera, elapsedTime, ctx) {
   }
 }
 
-},{"./shot":20,"./vector":22}],17:[function(require,module,exports){
+},{"./shot":21}],17:[function(require,module,exports){
 "use strict";
 
 /* Classes and Libraries */
-const Vector = require('./vector');
 const Bullet = require('./bullet');
-//const Missile = require('./missile');
 
 /* Constants */
 const ENEMY_SPEED = .001;
@@ -1839,7 +1881,7 @@ Enemy5.prototype.render = function(camera, elapsedTime, ctx) {
   }
 }
 
-},{"./bullet":11,"./vector":22}],18:[function(require,module,exports){
+},{"./bullet":11}],18:[function(require,module,exports){
 "use strict";
 
 /**
@@ -1904,8 +1946,8 @@ Game.prototype.loop = function(newTime) {
 "use strict";
 
 /* Classes and Libraries */
-const Vector = require('./vector');
 const Bullet = require('./bullet');
+const Shot = require('./shot');
 
 /* Constants */
 const PLAYER_SPEED = 5;
@@ -1933,6 +1975,7 @@ function Player(bullets, missiles) {
   this.explodingState = 0;
   this.width = 24;
   this.height = 28;
+  this.powerup = 0;
 }
 
 /**
@@ -1991,6 +2034,28 @@ Player.prototype.render = function(elapsedTime, ctx) {
     ctx.translate(this.position.x, this.position.y);
     ctx.drawImage(this.img, 47+offset, 57, 24, 28, -12.5, -12, this.width, this.height);
     ctx.restore();
+
+    for(var i = 0; i < this.bullets.length; i++) {
+      this.bullets[i].render(elapsedTime, ctx);
+      if(this.type > 0) {
+        if(this.bullets[i].position.y < camera.y) {
+          this.bullets[i].alive = false;
+        }
+        if(this.type == 1) { //fire
+          if(this.bullets[i].state > 4) {
+            this.bullets.splice(i, 1);
+          }
+        } else if(this.type == 2) { //banana
+          if(this.bullets[i].state > 3) {
+            this.bullets.splice(i, 1);
+          }
+        } else { //star
+          if(this.bullets[i].state > 9) {
+            this.bullets.splice(i, 1);
+          }
+        }
+      }
+    }
   } else {
     this.img.src = 'assets/explosions.png';
     ctx.save();
@@ -2019,16 +2084,123 @@ Player.prototype.render = function(elapsedTime, ctx) {
 }
 
 Player.prototype.fireBullet = function(canvas) {
-  this.bullets.push(new Bullet({
-    x:this.position.x,
-    y:this.position.y,
-    angle: Math.PI/2},
-    canvas,
-    BULLET_SPEED
-  ));
+  if(this.powerup == 0) { //bullet
+    this.bullets.push(new Bullet({
+      x:this.position.x,
+      y:this.position.y,
+      angle: Math.PI/2},
+      canvas,
+      BULLET_SPEED
+    ));
+  } else if(this.powerup == 1) { //fire
+    var position = {
+      x: this.position.x,
+      y: this.position.y - BULLET_SPEED
+    };
+
+    var image = {
+      x: 0,
+      y: 42,
+      width: 12,
+      height: 14
+    };
+    this.bullets.push(new Shot(
+      position,
+      canvas,
+      -BULLET_SPEED,
+      'assets/bullets.png',
+      image
+    ));
+  } else if(this.powerup == 2) { //banana
+    var position = {
+      x: this.position.x,
+      y: this.position.y - BULLET_SPEED
+    };
+
+    var image = {
+      x: 0,
+      y: 112,
+      width: 12,
+      height: 14
+    };
+    this.bullets.push(new Shot(
+      position,
+      canvas,
+      -BULLET_SPEED,
+      'assets/bullets.png',
+      image
+    ));
+  } else { //star
+    var position = {
+      x: this.position.x,
+      y: this.position.y - BULLET_SPEED
+    };
+
+    var image = {
+      x: 0,
+      y: 126,
+      width: 12,
+      height: 14
+    };
+    this.bullets.push(new Shot(
+      position,
+      canvas,
+      -BULLET_SPEED,
+      'assets/bullets.png',
+      image
+    ));
+  }
 }
 
-},{"./bullet":11,"./vector":22}],20:[function(require,module,exports){
+},{"./bullet":11,"./shot":21}],20:[function(require,module,exports){
+"use strict";
+
+/**
+ * @module Powerup
+ * A class representing a enemy's ship
+ */
+module.exports = exports = Powerup;
+
+/**
+ * @constructor Powerup
+ * Creates a powerup
+ */
+function Powerup(position, type) {
+  this.position = {x: position.x, y: position.y};
+  this.type = type;
+  this.image = new Image();
+  this.image.src = 'assets/bullets.png';
+  this.width = 12;
+  this.height = 14;
+}
+
+/**
+ * @function render
+ * Renders the powerup in world coordinates
+ * @param {DOMHighResTimeStamp} elapsedTime
+ * @param {CanvasRenderingContext2D} ctx
+ */
+Powerup.prototype.render = function(elapsedTime, ctx) {
+  switch(this.type) {
+    case 1: //fire
+      ctx.save();
+      ctx.drawImage(this.image, 179, 14, this.width, this.height, this.position.x, this.position.y, this.width, this.height);
+      ctx.restore();
+      break;
+    case 2: //bananas
+      ctx.save();
+      ctx.drawImage(this.image, 215, 196, this.width, this.height, this.position.x, this.position.y, this.width, this.height);
+      ctx.restore();
+      break;
+    case 3: //star
+      ctx.save();
+      ctx.drawImage(this.image, 71, 196, this.width, this.height, this.position.x, this.position.y, this.width, this.height);
+      ctx.restore();
+      break;
+  }
+}
+
+},{}],21:[function(require,module,exports){
 "use strict";
 
 const MS_PER_FRAME = 1000/8;
@@ -2058,6 +2230,7 @@ function Shot(position, canvas, speed, src, image) {
   this.imageHeight = image.height;
   this.imageX = image.x;
   this.imageY = image.y
+  this.alive = true;
 }
 
 /**
@@ -2087,7 +2260,7 @@ Shot.prototype.render = function(time, ctx) {
   this.state++;
 }
 
-},{}],21:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 "use strict";
 
 // Tilemap engine defined using the Module pattern
@@ -2202,7 +2375,7 @@ Tilemap.prototype.tileAt = function(x, y, layer) {
   return this.tiles[this.layers[layer].data[x + y*this.mapWidth] - 1];
 }
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 "use strict";
 
 /**

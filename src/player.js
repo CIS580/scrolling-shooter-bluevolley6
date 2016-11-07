@@ -1,8 +1,8 @@
 "use strict";
 
 /* Classes and Libraries */
-const Vector = require('./vector');
 const Bullet = require('./bullet');
+const Shot = require('./shot');
 
 /* Constants */
 const PLAYER_SPEED = 5;
@@ -30,6 +30,7 @@ function Player(bullets, missiles) {
   this.explodingState = 0;
   this.width = 24;
   this.height = 28;
+  this.powerup = 0;
 }
 
 /**
@@ -88,6 +89,28 @@ Player.prototype.render = function(elapsedTime, ctx) {
     ctx.translate(this.position.x, this.position.y);
     ctx.drawImage(this.img, 47+offset, 57, 24, 28, -12.5, -12, this.width, this.height);
     ctx.restore();
+
+    for(var i = 0; i < this.bullets.length; i++) {
+      this.bullets[i].render(elapsedTime, ctx);
+      if(this.type > 0) {
+        if(this.bullets[i].position.y < camera.y) {
+          this.bullets[i].alive = false;
+        }
+        if(this.type == 1) { //fire
+          if(this.bullets[i].state > 4) {
+            this.bullets.splice(i, 1);
+          }
+        } else if(this.type == 2) { //banana
+          if(this.bullets[i].state > 3) {
+            this.bullets.splice(i, 1);
+          }
+        } else { //star
+          if(this.bullets[i].state > 9) {
+            this.bullets.splice(i, 1);
+          }
+        }
+      }
+    }
   } else {
     this.img.src = 'assets/explosions.png';
     ctx.save();
@@ -116,11 +139,70 @@ Player.prototype.render = function(elapsedTime, ctx) {
 }
 
 Player.prototype.fireBullet = function(canvas) {
-  this.bullets.push(new Bullet({
-    x:this.position.x,
-    y:this.position.y,
-    angle: Math.PI/2},
-    canvas,
-    BULLET_SPEED
-  ));
+  if(this.powerup == 0) { //bullet
+    this.bullets.push(new Bullet({
+      x:this.position.x,
+      y:this.position.y,
+      angle: Math.PI/2},
+      canvas,
+      BULLET_SPEED
+    ));
+  } else if(this.powerup == 1) { //fire
+    var position = {
+      x: this.position.x,
+      y: this.position.y - BULLET_SPEED
+    };
+
+    var image = {
+      x: 0,
+      y: 42,
+      width: 12,
+      height: 14
+    };
+    this.bullets.push(new Shot(
+      position,
+      canvas,
+      -BULLET_SPEED,
+      'assets/bullets.png',
+      image
+    ));
+  } else if(this.powerup == 2) { //banana
+    var position = {
+      x: this.position.x,
+      y: this.position.y - BULLET_SPEED
+    };
+
+    var image = {
+      x: 0,
+      y: 112,
+      width: 12,
+      height: 14
+    };
+    this.bullets.push(new Shot(
+      position,
+      canvas,
+      -BULLET_SPEED,
+      'assets/bullets.png',
+      image
+    ));
+  } else { //star
+    var position = {
+      x: this.position.x,
+      y: this.position.y - BULLET_SPEED
+    };
+
+    var image = {
+      x: 0,
+      y: 126,
+      width: 12,
+      height: 14
+    };
+    this.bullets.push(new Shot(
+      position,
+      canvas,
+      -BULLET_SPEED,
+      'assets/bullets.png',
+      image
+    ));
+  }
 }

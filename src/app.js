@@ -2,7 +2,6 @@
 
 /* Classes and Libraries */
 const Game = require('./game');
-const Vector = require('./vector');
 const Camera = require('./camera');
 const Player = require('./player');
 const Tilemap = require('./tilemap');
@@ -12,6 +11,7 @@ const Enemy2 = require('./enemy2');
 const Enemy3 = require('./enemy3');
 const Enemy4 = require('./enemy4');
 const Enemy5 = require('./enemy5');
+const Powerup = require('./powerups');
 
 var level = 0;
 var pause = false;
@@ -45,6 +45,7 @@ var camera = new Camera(canvas);
 var missiles = [];
 var player = new Player([], missiles);
 var shooting = false;
+var powerups = [];
 
 var enemies = [];
 var enemyCount;
@@ -180,6 +181,7 @@ function update(elapsedTime, ctx) {
         }
       }));
       newEnemies(3);
+      newPowerups(3);
       enemyCount = enemies.length;
       level++;
     }
@@ -193,6 +195,7 @@ function update(elapsedTime, ctx) {
         enemies = [];
         tilemaps = [];
         newEnemies(4);
+        newPowerups(4);
         enemyCount = enemies.length;
         tilemaps.push(new Tilemap(level2Back, {
           onload: function() {
@@ -215,6 +218,7 @@ function update(elapsedTime, ctx) {
         enemies = [];
         tilemaps = [];
         newEnemies(5);
+        newPowerups(5);
         enemyCount = enemies.length;
         tilemaps.push(new Tilemap(level3Back, {
           onload: function() {
@@ -268,6 +272,9 @@ function update(elapsedTime, ctx) {
         colliding = false;
       }
     }
+
+    //check to see if player hit a powerup
+    powerupCollision();
   }
 }
 
@@ -345,7 +352,7 @@ function renderMaps(elapsedTime, ctx) {
   */
 function renderWorld(elapsedTime, ctx) {
     // Render the bullets
-    player.bullets.forEach(function(bullet){bullet.render(elapsedTime, ctx);});
+    //player.bullets.forEach(function(bullet){bullet.render(elapsedTime, ctx);});
 
     // Render the player
     player.render(elapsedTime, ctx);
@@ -354,6 +361,37 @@ function renderWorld(elapsedTime, ctx) {
     enemies.forEach(function(enemy) {
       enemy.render(camera, elapsedTime, ctx);
     });
+
+    // Render the powerups
+    powerups.forEach(function(powerup) {
+      powerup.render(elapsedTime, ctx);
+    })
+}
+
+function newPowerups(count) {
+  for(var i = 0; i < count; i++) {
+    powerups.push(new Powerup(
+      {
+        x: Math.floor(Math.random() * (canvas.width-240))+ 20,
+        y: Math.floor(Math.random() * (canvas.height - 20)) + 10
+      },
+      1
+    ));
+    powerups.push(new Powerup(
+      {
+        x: Math.floor(Math.random() * (canvas.width-240))+ 20,
+        y: Math.floor(Math.random() * (canvas.height - 20)) + 10
+      },
+      2
+    ));
+    powerups.push(new Powerup(
+      {
+        x: Math.floor(Math.random() * (canvas.width-240))+ 20,
+        y: Math.floor(Math.random() * (canvas.height - 20)) + 10
+      },
+      3
+    ));
+  }
 }
 
 function newEnemies(count) {
@@ -467,6 +505,20 @@ function playerCollision() {
             }
             return;
           }
+        }
+    }
+  }
+  return;
+}
+
+function powerupCollision() {
+  for(var i = 0; i < powerups.length; i++) {
+    if(!player.exploding) {
+      if(powerups[i].position.x < (player.position.x + player.width) && powerups[i].position.x > player.position.x
+        && powerups[i].position.y < (player.position.y + player.height) && powerups[i].position.y > player.position.y) {
+          player.powerup = powerups[i].type;
+          powerups.splice(i, 1);
+          return;
         }
     }
   }
